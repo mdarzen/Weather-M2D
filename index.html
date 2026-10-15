@@ -173,21 +173,60 @@ body.light .seg{background:rgba(22,32,44,.08)}
 body.light .range .track{background:rgba(22,32,44,.1)}
 .range .track span{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#6ec6ff,#ffd23f,#ff9233)}
 
-/* ---------- Radar ---------- */
-#radarMap{height:56vh;min-height:300px;border-radius:18px;overflow:hidden;isolation:isolate;background:#1b2233}
-body.light #radarMap{background:#dfe6ee}
-.leaflet-container{font-family:inherit}
-.leaflet-control-attribution{font-size:9px !important}
-.leaflet-bar{border:0 !important;border-radius:12px !important;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.25) !important}
-.leaflet-bar a{width:36px !important;height:36px !important;line-height:36px !important;background:rgba(20,26,40,.75) !important;color:#fff !important;border-bottom:1px solid rgba(255,255,255,.15) !important;backdrop-filter:blur(8px)}
-body.light .leaflet-bar a{background:rgba(255,255,255,.85) !important;color:#16202c !important;border-bottom-color:rgba(0,0,0,.08) !important}
-.radar-ctl{display:flex;align-items:center;gap:12px;margin-top:12px}
-.play{width:48px;height:48px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--ink);font-size:1rem;border:1px solid var(--glass-b);background:var(--glass-b)}
-.radar-ctl input{flex:1;accent-color:#3a8dff;height:30px}
-.radar-time{min-width:58px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
-.radar-time small{display:block;font-size:.66rem;font-weight:500;color:var(--ink-soft)}
-.radar-msg{text-align:center;color:var(--ink-soft);font-size:.85rem;padding:10px 0 0}
-.me-dot{width:16px;height:16px;border-radius:50%;background:#3a8dff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(58,141,255,.3)}
+/* ---------- Map (Windy) ---------- */
+.layers{display:flex;gap:8px;overflow-x:auto;margin:0 -4px 12px;padding:0 4px 2px}
+.layers::-webkit-scrollbar{display:none}
+.layers button{flex:none;border:1px solid var(--glass-b);background:transparent;color:var(--ink-soft);font-weight:600;font-size:.82rem;padding:9px 13px;border-radius:14px;display:flex;align-items:center;gap:7px}
+.layers button.on{background:var(--glass-b);color:var(--ink)}
+#mapFrameWrap{height:62vh;min-height:340px;border-radius:18px;overflow:hidden;background:rgba(0,0,0,.2);position:relative}
+#mapFrameWrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.map-note{font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:10px}
+
+/* ---------- Alerts ---------- */
+.alert{display:flex;gap:12px;align-items:flex-start;border-radius:20px;padding:14px;margin-bottom:10px;border-left:5px solid var(--lvl)}
+.alert .ai{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--lvl);color:#111;font-size:1.05rem}
+.alert b{display:block;font-size:.95rem}
+.alert span{display:block;font-size:.8rem;color:var(--ink-soft);margin-top:3px}
+.alert-note{font-size:.7rem;color:var(--ink-soft);margin:-2px 4px 14px}
+.alert-note a{color:inherit;font-weight:700}
+
+/* ---------- Summary ---------- */
+.sum{list-style:none;display:flex;flex-direction:column;gap:10px}
+.sum li{display:flex;gap:12px;align-items:flex-start;font-size:.92rem;line-height:1.4}
+.sum li i{width:20px;text-align:center;margin-top:3px;color:var(--ink-soft);flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:600;padding:5px 11px;border-radius:20px;margin-top:10px;background:var(--glass);border:1px solid var(--glass-b)}
+
+/* ---------- Activities ---------- */
+.acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.act{border-radius:16px;padding:11px 12px;background:rgba(255,255,255,.08);border:1px solid var(--glass-b)}
+body.light .act{background:rgba(255,255,255,.35)}
+.act .an{display:flex;align-items:center;gap:8px;font-weight:600;font-size:.85rem}
+.act .an i{width:18px;text-align:center}
+.act .as{display:flex;align-items:center;justify-content:space-between;margin-top:8px;font-size:.74rem;color:var(--ink-soft)}
+.act .ab{height:5px;border-radius:5px;background:rgba(255,255,255,.18);margin-top:6px;overflow:hidden}
+body.light .act .ab{background:rgba(22,32,44,.1)}
+.act .ab span{display:block;height:100%;border-radius:5px;transition:width .8s}
+
+/* ---------- Moon ---------- */
+.moon-wrap{display:flex;align-items:center;gap:18px}
+.moon-wrap svg{width:92px;height:92px;flex:none;filter:drop-shadow(0 4px 16px rgba(255,255,255,.15))}
+body.light .moon-wrap circle{fill:rgba(22,32,44,.22);stroke:rgba(22,32,44,.25)}
+body.light #moonLit{fill:#fffbe8;stroke:rgba(22,32,44,.35);stroke-width:1}
+body.light .moon-wrap svg{filter:drop-shadow(0 3px 10px rgba(22,32,44,.25))}
+.dryonly .rbars,.dryonly .rlabels,.dryonly .note{display:none}
+.moon-info h3{font-size:1.1rem;font-weight:700}
+.moon-info p{font-size:.82rem;color:var(--ink-soft);margin-top:4px}
+.moon-times{display:flex;gap:18px;margin-top:10px;font-size:.85rem;font-weight:600}
+.moon-times i{color:var(--ink-soft);margin-right:5px}
+
+/* ---------- Earthquakes ---------- */
+.eq{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--glass-b);color:inherit;text-decoration:none}
+.eq:last-of-type{border-bottom:0}
+.eq .mag{width:46px;height:46px;flex:none;border-radius:14px;display:grid;place-items:center;font-weight:800;font-size:1rem;color:#111}
+.eq .ep{font-weight:600;font-size:.9rem}
+.eq .em{font-size:.75rem;color:var(--ink-soft);margin-top:2px}
+.eq .et{margin-left:auto;font-size:.72rem;color:var(--ink-soft);text-align:right;flex:none}
+.day .conf{display:block;font-size:.62rem;font-weight:700;margin-top:3px}
 
 /* ---------- Air quality ---------- */
 .aqi-main{display:flex;align-items:center;gap:18px}
@@ -279,6 +318,14 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         <div class="temp"><span id="temp">--</span><sup>°C</sup></div>
         <div class="desc" id="desc">—</div>
         <div class="hl"><span data-i18n="feels"></span> <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+        <div class="chip hidden" id="normChip"></div>
+      </div>
+
+      <div id="alerts"></div>
+
+      <div class="card glass hidden" id="sumCard">
+        <div class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="summaryTitle"></span></div>
+        <ul class="sum" id="sumList"></ul>
       </div>
 
       <div class="card glass">
@@ -292,6 +339,11 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         <div class="rbars" id="rainBars"></div>
         <div class="rlabels"><span data-i18n="nowLabel"></span><span data-i18n="plus1h"></span><span data-i18n="plus2h"></span></div>
         <div class="note" data-i18n="rainNote"></div>
+      </div>
+
+      <div class="card glass hidden" id="actsCard">
+        <div class="card-title"><i class="fa-solid fa-person-running"></i><span id="actsTitle"></span></div>
+        <div class="acts" id="actsGrid"></div>
       </div>
 
       <div class="grid">
@@ -369,6 +421,28 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         </div>
         <div class="sun-meta" id="dayLen">—</div>
       </div>
+
+      <div class="card glass hidden" id="moonCard">
+        <div class="card-title"><i class="fa-solid fa-moon"></i><span data-i18n="moonTitle"></span></div>
+        <div class="moon-wrap">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle cx="50" cy="50" r="40" fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.25)"/>
+            <path id="moonLit" fill="#f4f1e6"/>
+          </svg>
+          <div class="moon-info">
+            <h3 id="moonPhase">—</h3>
+            <p id="moonIllum">—</p>
+            <div class="moon-times"><span><i class="fa-solid fa-arrow-up"></i><span id="moonRise">--:--</span></span><span><i class="fa-solid fa-arrow-down"></i><span id="moonSet">--:--</span></span></div>
+            <p id="moonNext"></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card glass hidden" id="eqCard">
+        <div class="card-title"><i class="fa-solid fa-house-crack"></i><span data-i18n="quakeTitle"></span></div>
+        <div id="eqList"></div>
+        <div class="note" id="eqNote"></div>
+      </div>
       <div class="updated" id="updated"></div>
     </section>
 
@@ -388,20 +462,17 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
       <div class="card glass">
         <div class="card-title"><i class="fa-solid fa-list"></i><span data-i18n="details"></span></div>
         <div id="dayList"></div>
+        <div class="note hidden" id="confNote" data-i18n="confNote"></div>
       </div>
     </section>
 
-    <!-- ================= RADAR ================= -->
-    <section class="view" id="view-radar">
+    <!-- ================= MAP ================= -->
+    <section class="view" id="view-map">
       <div class="card glass">
-        <div class="card-title"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="radarTitle"></span></div>
-        <div id="radarMap"></div>
-        <div class="radar-ctl">
-          <button class="play" id="radarPlay" data-i18n-aria="play"><i class="fa-solid fa-play"></i></button>
-          <input type="range" id="radarSlider" min="0" max="0" value="0" step="1">
-          <div class="radar-time" id="radarTime">--:--<small>&nbsp;</small></div>
-        </div>
-        <div class="radar-msg" id="radarMsg" data-i18n="radarHint"></div>
+        <div class="card-title"><i class="fa-solid fa-map-location-dot"></i><span data-i18n="mapTitle"></span></div>
+        <div class="layers" id="layers"></div>
+        <div id="mapFrameWrap"></div>
+        <div class="map-note" data-i18n="mapNote"></div>
       </div>
     </section>
 
@@ -466,7 +537,7 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
   <nav class="bottom glass">
     <button class="active" data-view="now"><i class="fa-solid fa-house"></i><span data-i18n="navNow"></span></button>
     <button data-view="forecast"><i class="fa-solid fa-chart-line"></i><span data-i18n="navForecast"></span></button>
-    <button data-view="radar"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="navRadar"></span></button>
+    <button data-view="map"><i class="fa-solid fa-map-location-dot"></i><span data-i18n="navMap"></span></button>
     <button data-view="air"><i class="fa-solid fa-leaf"></i><span data-i18n="navAir"></span></button>
     <button data-view="search"><i class="fa-solid fa-magnifying-glass"></i><span data-i18n="navSearch"></span></button>
   </nav>
@@ -527,8 +598,8 @@ const hhmm = iso => (typeof iso === 'string' && iso.length >= 16) ? iso.slice(11
 const I18N = {
   el: {
     locale:'el-GR', appName:'Καιρός',
-    navNow:'Τώρα', navForecast:'Πρόγνωση', navRadar:'Ραντάρ', navAir:'Αέρας', navSearch:'Αναζήτηση',
-    refresh:'Ανανέωση', locate:'Εντοπισμός', clear:'Καθαρισμός', play:'Αναπαραγωγή',
+    navNow:'Τώρα', navForecast:'Πρόγνωση', navAir:'Αέρας', navSearch:'Αναζήτηση',
+    refresh:'Ανανέωση', locate:'Εντοπισμός', clear:'Καθαρισμός',
     myLocation:'Η τοποθεσία μου', currentPos:'Τρέχουσα θέση', athens:'Αθήνα', attica:'Αττική, Ελλάδα',
     feels:'Αίσθηση', hours24:'Επόμενες 24 ώρες', nowLabel:'Τώρα', plus1h:'+1 ώρα', plus2h:'+2 ώρες',
     rainTitle:'Βροχή τις επόμενες 2 ώρες', rainNone:'Δεν αναμένεται βροχή τις επόμενες 2 ώρες',
@@ -548,9 +619,6 @@ const I18N = {
     hintDaily:'Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής ανά ημέρα',
     hintHourly:'Σύρετε οριζόντια · θερμοκρασία και πιθανότητα βροχής ανά ώρα',
     details:'Αναλυτικά', today:'Σήμερα', tMax:'Μέγιστη', tMin:'Ελάχιστη', tTemp:'Θερμοκρασία', rainProb:'Πιθ. βροχής',
-    radarTitle:'Ραντάρ βροχής', radarHint:'Τελευταίες 2 ώρες · ανανεώνεται κάθε 10 λεπτά',
-    radarErr:'Το ραντάρ δεν είναι διαθέσιμο αυτή τη στιγμή. Δοκιμάστε ξανά αργότερα.',
-    radarLatest:'τελευταίο', radarAgo:'πριν {m}′',
     aqiTitle:'Ευρωπαϊκός δείκτης ποιότητας αέρα', pollutants:'Ρύποι (µg/m³)', aqiSource:'Πηγή: Open-Meteo Air Quality (CAMS)',
     legGood:'Καλή', legMod:'Μέτρια', legBad:'Εξαιρ. κακή',
     aqiL:['Καλή','Ικανοποιητική','Μέτρια','Κακή','Πολύ κακή','Εξαιρετικά κακή'],
@@ -570,12 +638,38 @@ const I18N = {
     fetchErr:'Αδυναμία λήψης δεδομένων. Ελέγξτε τη σύνδεσή σας.',
     geoUnsupported:'Ο εντοπισμός δεν υποστηρίζεται σε αυτή τη συσκευή.',
     geoDenied:'Δεν δόθηκε άδεια εντοπισμού θέσης.', geoFailed:'Ο εντοπισμός απέτυχε. Δοκιμάστε την αναζήτηση.',
-    compass:['Β','ΒΑ','Α','ΝΑ','Ν','ΝΔ','Δ','ΒΔ'], north:'Β'
+    compass:['Β','ΒΑ','Α','ΝΑ','Ν','ΝΔ','Δ','ΒΔ'], north:'Β',
+    navMap:'Χάρτης', mapTitle:'Χάρτης καιρού', mapNote:'Χάρτης από Windy.com · πατήστε ▶ για να δείτε την εξέλιξη στο χρόνο',
+    layRain:'Βροχή', layRadar:'Ραντάρ', laySat:'Δορυφόρος', layWind:'Άνεμος', layTemp:'Θερμοκρασία', layWaves:'Κύμα', layThunder:'Κεραυνοί',
+    summaryTitle:'Σύνοψη',
+    sumToday:'Σήμερα: {desc}, από {min}° έως {max}°.', sumTonight:'Απόψε: {desc}, η θερμοκρασία πέφτει ως τους {min}°.',
+    sumRainNow:'Βρέχει τώρα — κρατήστε ομπρέλα.', sumRainAt:'Πάρτε ομπρέλα: πιθανή βροχή από τις {h}.',
+    sumSnowAt:'Πιθανή χιονόπτωση από τις {h}.', sumDry:'Δεν αναμένεται βροχή τις επόμενες 12 ώρες.',
+    sumWind:'Δυνατός αέρας, ριπές έως {g} km/h γύρω στις {h}.', sumUV:'Υψηλός δείκτης UV ({v}) το μεσημέρι — αντηλιακό και καπέλο.',
+    sumWear:'Ντύσιμο: {item}.',
+    wear:['χοντρό μπουφάν, κασκόλ και γάντια','ζεστό μπουφάν','ζακέτα ή ελαφρύ μπουφάν','ελαφριά ρούχα και κάτι για το βράδυ','καλοκαιρινά ρούχα'],
+    sumWarmer:'Αύριο πιο ζεστά κατά {d}°.', sumColder:'Αύριο πιο κρύα κατά {d}°.', sumTomRain:'Αύριο πιθανές βροχές ({p}%).',
+    sumConf:'Βεβαιότητα πρόγνωσης για αύριο: {lvl}.', confL:['χαμηλή','μέτρια','υψηλή'], confChip:['Αβέβαιη','Μέτρια','Σίγουρη'],
+    confNote:'Βεβαιότητα: πόσο συμφωνούν 3 μοντέλα πρόγνωσης (ECMWF, GFS, ICON).',
+    normAbove:'{d}° πάνω από τον μέσο όρο της εποχής', normBelow:'{d}° κάτω από τον μέσο όρο της εποχής', normNormal:'Κανονική θερμοκρασία για την εποχή',
+    actsTitle:'Καλή μέρα για… ({when})', actsToday:'σήμερα', actsTomorrow:'αύριο',
+    actRun:'Τρέξιμο', actBike:'Ποδήλατο', actHike:'Πεζοπορία', actBeach:'Μπάνιο', actFish:'Ψάρεμα', actDine:'Φαγητό έξω', actLaundry:'Άπλωμα ρούχων',
+    scoreL:['Κακή','Μέτρια','Καλή','Ιδανική'],
+    moonTitle:'Σελήνη', moonPhases:['Νέα Σελήνη','Αύξων μηνίσκος','Πρώτο τέταρτο','Αύξουσα σελήνη','Πανσέληνος','Φθίνουσα σελήνη','Τελευταίο τέταρτο','Φθίνων μηνίσκος'],
+    moonIllum:'Φωτισμένη κατά {p}%', nextFull:'Επόμενη πανσέληνος: {d}',
+    quakeTitle:'Σεισμοί κοντά σας', quakeNone:'Κανένας σεισμός άνω των 2,5 Ρίχτερ σε ακτίνα 300 km τις τελευταίες 7 ημέρες.',
+    quakeErr:'Τα δεδομένα σεισμών δεν είναι διαθέσιμα αυτή τη στιγμή.', quakeMeta:'{km} km {dir} · βάθος {dep} km',
+    quakeNote:'Τελευταίες 7 ημέρες · ακτίνα 300 km · πηγή: {src}',
+    alHeat:'Καύσωνας', alFrost:'Παγετός', alWind:'Θυελλώδεις άνεμοι', alRain:'Ισχυρή βροχή', alStorm:'Καταιγίδες', alHail:'Καταιγίδες με χαλάζι',
+    alSnow:'Χιονόπτωση', alUV:'Πολύ υψηλή υπεριώδης ακτινοβολία', alFog:'Ομίχλη', alQuake:'Σεισμός {m} Ρίχτερ κοντά σας',
+    alUpTo:'Έως {v}°', alWindD:'Ριπές έως {v} km/h', alRainD:'Έως {v} mm σε μία ώρα', alSnowD:'Έως {v} cm', alUVD:'Δείκτης UV έως {v}',
+    alQuakeD:'{km} km μακριά · {ago}', alWhen:'{day} {from}–{to}',
+    alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alLink:'ΕΜΥ', tomorrow:'Αύριο'
   },
   en: {
     locale:'en-GB', appName:'Weather',
-    navNow:'Now', navForecast:'Forecast', navRadar:'Radar', navAir:'Air', navSearch:'Search',
-    refresh:'Refresh', locate:'Locate me', clear:'Clear', play:'Play',
+    navNow:'Now', navForecast:'Forecast', navAir:'Air', navSearch:'Search',
+    refresh:'Refresh', locate:'Locate me', clear:'Clear',
     myLocation:'My location', currentPos:'Current location', athens:'Athens', attica:'Attica, Greece',
     feels:'Feels like', hours24:'Next 24 hours', nowLabel:'Now', plus1h:'+1 hour', plus2h:'+2 hours',
     rainTitle:'Rain in the next 2 hours', rainNone:'No rain expected in the next 2 hours',
@@ -595,9 +689,6 @@ const I18N = {
     hintDaily:'Daily high / low temperature and chance of rain',
     hintHourly:'Swipe sideways · hourly temperature and chance of rain',
     details:'Details', today:'Today', tMax:'High', tMin:'Low', tTemp:'Temperature', rainProb:'Rain chance',
-    radarTitle:'Rain radar', radarHint:'Last 2 hours · updates every 10 minutes',
-    radarErr:'Radar is unavailable right now. Please try again later.',
-    radarLatest:'latest', radarAgo:'{m} min ago',
     aqiTitle:'European Air Quality Index', pollutants:'Pollutants (µg/m³)', aqiSource:'Source: Open-Meteo Air Quality (CAMS)',
     legGood:'Good', legMod:'Moderate', legBad:'Extremely poor',
     aqiL:['Good','Fair','Moderate','Poor','Very poor','Extremely poor'],
@@ -617,7 +708,33 @@ const I18N = {
     fetchErr:'Could not load data. Check your connection.',
     geoUnsupported:'Location is not supported on this device.',
     geoDenied:'Location permission was not granted.', geoFailed:'Could not get your location. Try searching instead.',
-    compass:['N','NE','E','SE','S','SW','W','NW'], north:'N'
+    compass:['N','NE','E','SE','S','SW','W','NW'], north:'N',
+    navMap:'Map', mapTitle:'Weather map', mapNote:'Map by Windy.com · press ▶ to see how it develops over time',
+    layRain:'Rain', layRadar:'Radar', laySat:'Satellite', layWind:'Wind', layTemp:'Temperature', layWaves:'Waves', layThunder:'Lightning',
+    summaryTitle:'Summary',
+    sumToday:'Today: {desc}, {min}° to {max}°.', sumTonight:'Tonight: {desc}, dropping to {min}°.',
+    sumRainNow:'It is raining now — keep an umbrella handy.', sumRainAt:'Take an umbrella: rain likely from {h}.',
+    sumSnowAt:'Snow likely from {h}.', sumDry:'No rain expected in the next 12 hours.',
+    sumWind:'Windy, gusts up to {g} km/h around {h}.', sumUV:'High UV ({v}) around midday — sunscreen and a hat.',
+    sumWear:'What to wear: {item}.',
+    wear:['a heavy coat, scarf and gloves','a warm jacket','a light jacket or sweater','light clothes, plus a layer for later','summer clothes'],
+    sumWarmer:'Tomorrow {d}° warmer.', sumColder:'Tomorrow {d}° cooler.', sumTomRain:'Rain likely tomorrow ({p}%).',
+    sumConf:"Confidence in tomorrow's forecast: {lvl}.", confL:['low','medium','high'], confChip:['Uncertain','Fair','Confident'],
+    confNote:'Confidence: how closely 3 forecast models agree (ECMWF, GFS, ICON).',
+    normAbove:'{d}° above the seasonal average', normBelow:'{d}° below the seasonal average', normNormal:'Normal temperature for the season',
+    actsTitle:'Good day for… ({when})', actsToday:'today', actsTomorrow:'tomorrow',
+    actRun:'Running', actBike:'Cycling', actHike:'Hiking', actBeach:'Swimming', actFish:'Fishing', actDine:'Eating outdoors', actLaundry:'Drying laundry',
+    scoreL:['Poor','Fair','Good','Great'],
+    moonTitle:'Moon', moonPhases:['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'],
+    moonIllum:'{p}% illuminated', nextFull:'Next full moon: {d}',
+    quakeTitle:'Earthquakes near you', quakeNone:'No earthquakes above M2.5 within 300 km in the last 7 days.',
+    quakeErr:'Earthquake data is unavailable right now.', quakeMeta:'{km} km {dir} · depth {dep} km',
+    quakeNote:'Last 7 days · 300 km radius · source: {src}',
+    alHeat:'Heatwave', alFrost:'Frost', alWind:'Gale-force winds', alRain:'Heavy rain', alStorm:'Thunderstorms', alHail:'Thunderstorms with hail',
+    alSnow:'Snowfall', alUV:'Very high UV radiation', alFog:'Fog', alQuake:'M{m} earthquake near you',
+    alUpTo:'Up to {v}°', alWindD:'Gusts up to {v} km/h', alRainD:'Up to {v} mm in an hour', alSnowD:'Up to {v} cm', alUVD:'UV index up to {v}',
+    alQuakeD:'{km} km away · {ago}', alWhen:'{day} {from}–{to}',
+    alNote:'Automatic estimate from the forecast. Official warnings:', alLink:'HNMS (EMY)', tomorrow:'Tomorrow'
   }
 };
 let lang = store.get('wx_lang', 'el');
@@ -713,7 +830,6 @@ function applyTheme(key){
   document.body.classList.toggle('light', th[1]);
   document.documentElement.style.setProperty('--glow', th[3]);
   document.querySelector('meta[name="theme-color"]').setAttribute('content', th[2]);
-  if(radar.map) radarBase();
 }
 
 /* =====================================================================
@@ -750,7 +866,7 @@ const SEA_COLORS = ['#3ddc84','#a3e048','#ffd23f','#ff9233','#ff4d4d'];
    State & location
    ===================================================================== */
 const DEFAULT_LOC = {lat:37.9838, lon:23.7275, def:true, cc:'GR'};
-const state = {loc:null, wx:null, aq:null, sea:null, mode:'daily', chart:null, view:'now', reqId:0};
+const state = {loc:null, wx:null, aq:null, sea:null, mode:'daily', chart:null, view:'now', reqId:0, conf:null, normals:null, quakes:null, quakesFailed:false};
 const gpsName = loc => loc.names && (loc.names[lang] || loc.names.el || loc.names.en);
 function locName(loc){
   if(loc.def) return t('athens');
@@ -778,7 +894,7 @@ async function loadWeather(loc){
   const wxUrl = 'https://api.open-meteo.com/v1/forecast?' + base +
     '&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,pressure_msl,dew_point_2m' +
     '&minutely_15=precipitation&forecast_minutely_15=12' +
-    '&hourly=temperature_2m,precipitation_probability,weather_code,is_day' +
+    '&hourly=temperature_2m,precipitation_probability,weather_code,is_day,precipitation,apparent_temperature,wind_speed_10m,wind_gusts_10m,uv_index,relative_humidity_2m,snowfall' +
     '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max' +
     '&timezone=auto&forecast_days=5&wind_speed_unit=kmh';
   const aqUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?' + base +
@@ -793,8 +909,11 @@ async function loadWeather(loc){
     ]);
     if(myReq !== state.reqId) return;          // a newer request superseded this one
     if(!wx || !wx.current || !wx.daily) throw new Error('bad payload');
-    state.wx = wx; state.aq = aq; state.sea = sea;
+    const sameLoc = state.wx && state.wxLoc && Math.abs(state.wxLoc.lat - loc.lat) < 1e-3 && Math.abs(state.wxLoc.lon - loc.lon) < 1e-3;
+    if(!sameLoc){ state.conf = null; state.normals = null; state.quakes = null; state.quakesFailed = false; }
+    state.wx = wx; state.aq = aq; state.sea = sea; state.wxLoc = {lat:loc.lat, lon:loc.lon};
     renderAll();
+    loadExtras(loc, myReq);
   }catch(e){
     if(myReq === state.reqId){ console.error(e); toast(t('fetchErr')); }
   }finally{
@@ -914,7 +1033,8 @@ function renderAll(){
   renderAir();
   renderDays();
   if(state.view === 'forecast') renderChart();
-  if(radar.map) radarCenter();
+  if(state.view === 'map') mapOpen();
+  renderExtras();
 }
 
 function renderStrip(){
@@ -975,6 +1095,7 @@ function renderRain(){
   card.classList.remove('hidden');
   $('#rainTitle').textContent = r.title;
   $('#rainMsg').innerHTML = '<i class="fa-solid ' + r.icon + '"></i><span>' + esc(r.msg) + '</span>';
+  card.classList.toggle('dryonly', !r.wet.some(Boolean));
   // 1 mm in 15 minutes is heavy rain -> full bar
   $('#rainBars').innerHTML = r.vals.map((v, i) =>
     '<div class="' + (r.wet[i] ? '' : 'dry') + '" style="height:' + (r.wet[i] ? Math.max(12, Math.min(100, v * 100)) : 6) + '%" title="' + fmt1(v) + ' mm"></div>'
@@ -1067,7 +1188,8 @@ function renderDays(){
     const left = (lo - gMin) / span * 100, width = (hi - lo) / span * 100;
     const pp = d.precipitation_probability_max ? d.precipitation_probability_max[i] : null;
     return '<div class="day">' +
-      '<div class="dn">' + (i === 0 ? esc(t('today')) : esc(dayShort(day))) + '<small>' + esc(dayDate(day)) + '</small></div>' +
+      '<div class="dn">' + (i === 0 ? esc(t('today')) : esc(dayShort(day))) + '<small>' + esc(dayDate(day)) + '</small>' +
+        (state.conf && num(state.conf[i]) ? '<span class="conf" style="color:' + ['#ff8a8a', '#ffd23f', '#3ddc84'][state.conf[i]] + '">' + esc(t('confChip')[state.conf[i]]) + '</span>' : '') + '</div>' +
       '<div class="di"><i class="fa-solid ' + wIcon(d.weather_code[i], true) + '" title="' + esc(wDesc(d.weather_code[i])) + '"></i></div>' +
       '<div class="dp">' + (num(pp) ? '<i class="fa-solid fa-droplet"></i> ' + pp + '%' : '') + '</div>' +
       '<div class="range"><span class="lo">' + r0(lo) + '°</span><div class="track"><span style="left:' + left + '%;width:' + Math.max(width, 4) + '%"></span></div><span class="hi">' + r0(hi) + '°</span></div>' +
@@ -1137,115 +1259,476 @@ function renderChart(){
 }
 
 /* =====================================================================
-   Rain radar (RainViewer free API: past 2 h, 10-min frames, max zoom 7,
-   colour scheme 2 = Universal Blue, 100 requests / min / IP)
+   Weather map (Windy embed — free, no key)
    ===================================================================== */
-const radar = {map:null, base:null, baseKey:null, marker:null, frames:[], host:'', layers:{}, idx:0, timer:null, loadedAt:0, loading:false};
-const LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
-const LEAFLET_JS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-let leafletReady = null;
-function ensureLeaflet(){
-  if(window.L && window.L.map) return Promise.resolve();
-  if(!leafletReady) leafletReady = Promise.all([loadCSS(LEAFLET_CSS).catch(() => {}), loadJS(LEAFLET_JS)]);
-  return leafletReady;
+const MAP_LAYERS = [
+  ['rain','fa-cloud-rain','layRain'], ['radar','fa-satellite-dish','layRadar'], ['satellite','fa-earth-europe','laySat'],
+  ['wind','fa-wind','layWind'], ['temp','fa-temperature-half','layTemp'], ['waves','fa-water','layWaves'], ['thunder','fa-bolt','layThunder']
+];
+const map = {layer: store.get('wx_layer', 'rain'), src:''};
+if(!MAP_LAYERS.some(l => l[0] === map.layer)) map.layer = 'rain';
+function renderLayers(){
+  $('#layers').innerHTML = MAP_LAYERS.map(l =>
+    '<button data-layer="' + l[0] + '" class="' + (l[0] === map.layer ? 'on' : '') + '"><i class="fa-solid ' + l[1] + '"></i>' + esc(t(l[2])) + '</button>').join('');
 }
-async function radarOpen(){
-  try{ await ensureLeaflet(); }
-  catch(e){ leafletReady = null; radarMsg(t('radarErr')); return; }
-  if(state.view !== 'radar') return;
+function windyUrl(lat, lon, overlay){
+  const la = lat.toFixed(3), lo = lon.toFixed(3);
+  return 'https://embed.windy.com/embed2.html?lat=' + la + '&lon=' + lo + '&detailLat=' + la + '&detailLon=' + lo +
+    '&width=650&height=450&zoom=' + (overlay === 'radar' || overlay === 'satellite' ? 8 : 7) +
+    '&level=surface&overlay=' + overlay + '&product=ecmwf&menu=&message=true&marker=true&calendar=now&pressure=&type=map' +
+    '&location=coordinates&detail=&metricWind=km%2Fh&metricTemp=%C2%B0C&radarRange=-1';
+}
+function mapOpen(){
   const loc = state.loc || DEFAULT_LOC;
-  if(!radar.map){
-    radar.map = L.map('radarMap', {zoomControl:false, minZoom:3, maxZoom:10, worldCopyJump:true, attributionControl:true})
-      .setView([loc.lat, loc.lon], 7);
-    L.control.zoom({position:'topright'}).addTo(radar.map);
-    radar.map.attributionControl.setPrefix(false);
+  const src = windyUrl(loc.lat, loc.lon, map.layer);
+  if(src === map.src) return;
+  map.src = src;
+  const f = document.createElement('iframe');
+  f.src = src; f.title = 'Windy'; f.loading = 'lazy';
+  f.setAttribute('allow', 'fullscreen');
+  f.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+  $('#mapFrameWrap').replaceChildren(f);
+}
+
+/* =====================================================================
+   Moon (computed on the device — SunCalc-style formulas)
+   ===================================================================== */
+const RAD = Math.PI / 180, DAYMS = 864e5, J1970 = 2440588, J2000 = 2451545, OBL = RAD * 23.4397;
+const toDays = ms => ms / DAYMS - 0.5 + J1970 - J2000;
+const rightAsc = (l, b) => Math.atan2(Math.sin(l) * Math.cos(OBL) - Math.tan(b) * Math.sin(OBL), Math.cos(l));
+const declin = (l, b) => Math.asin(Math.sin(b) * Math.cos(OBL) + Math.cos(b) * Math.sin(OBL) * Math.sin(l));
+function sunCoords(d){
+  const M = RAD * (357.5291 + 0.98560028 * d);
+  const C = RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M));
+  const L = M + C + RAD * 102.9372 + Math.PI;
+  return {dec:declin(L, 0), ra:rightAsc(L, 0)};
+}
+function moonCoords(d){
+  const L = RAD * (218.316 + 13.176396 * d), M = RAD * (134.963 + 13.064993 * d), F = RAD * (93.272 + 13.229350 * d);
+  const l = L + RAD * 6.289 * Math.sin(M), b = RAD * 5.128 * Math.sin(F), dist = 385001 - 20905 * Math.cos(M);
+  return {ra:rightAsc(l, b), dec:declin(l, b), dist};
+}
+function moonAltitude(ms, lat, lon){
+  const d = toDays(ms), c = moonCoords(d), phi = RAD * lat;
+  const H = RAD * (280.16 + 360.9856235 * d) + RAD * lon - c.ra;
+  let h = Math.asin(Math.sin(phi) * Math.sin(c.dec) + Math.cos(phi) * Math.cos(c.dec) * Math.cos(H));
+  const hh = Math.max(h, 0);
+  return h + 0.0002967 / Math.tan(hh + 0.00312536 / (hh + 0.08901179));   // refraction
+}
+function moonInfo(ms){
+  const d = toDays(ms), s = sunCoords(d), m = moonCoords(d), sdist = 149598000;
+  const phi = Math.acos(Math.sin(s.dec) * Math.sin(m.dec) + Math.cos(s.dec) * Math.cos(m.dec) * Math.cos(s.ra - m.ra));
+  const inc = Math.atan2(sdist * Math.sin(phi), m.dist - sdist * Math.cos(phi));
+  const ang = Math.atan2(Math.cos(s.dec) * Math.sin(s.ra - m.ra), Math.sin(s.dec) * Math.cos(m.dec) - Math.cos(s.dec) * Math.sin(m.dec) * Math.cos(s.ra - m.ra));
+  return {fraction:(1 + Math.cos(inc)) / 2, phase:0.5 + 0.5 * inc * (ang < 0 ? -1 : 1) / Math.PI};
+}
+// rise/set within the 24 h starting at startMs (local midnight of the place)
+function moonTimes(startMs, lat, lon){
+  const hc = 0.133 * RAD, HR = 36e5;
+  let h0 = moonAltitude(startMs, lat, lon) - hc, rise = null, set = null;
+  for(let i = 1; i <= 24; i += 2){
+    const h1 = moonAltitude(startMs + i * HR, lat, lon) - hc, h2 = moonAltitude(startMs + (i + 1) * HR, lat, lon) - hc;
+    const a = (h0 + h2) / 2 - h1, b = (h2 - h0) / 2, xe = -b / (2 * a), ye = (a * xe + b) * xe + h1, disc = b * b - 4 * a * h1;
+    let roots = 0, x1 = 0, x2 = 0;
+    if(disc >= 0){
+      const dx = Math.sqrt(disc) / (Math.abs(a) * 2);
+      x1 = xe - dx; x2 = xe + dx;
+      if(Math.abs(x1) <= 1) roots++;
+      if(Math.abs(x2) <= 1) roots++;
+      if(x1 < -1) x1 = x2;
+    }
+    if(roots === 1){ if(h0 < 0) rise = i + x1; else set = i + x1; }
+    else if(roots === 2){ rise = i + (ye < 0 ? x2 : x1); set = i + (ye < 0 ? x1 : x2); }
+    if(rise !== null && set !== null) break;
+    h0 = h2;
   }
-  radarBase();
-  radarCenter();
-  setTimeout(() => radar.map && radar.map.invalidateSize(), 80);
-  if(Date.now() - radar.loadedAt > 5 * 60 * 1000) await radarLoadFrames();
-  else radarShow(radar.idx);
+  return {rise:rise === null ? null : startMs + rise * HR, set:set === null ? null : startMs + set * HR};
 }
-function radarBase(){
-  if(!radar.map) return;
-  const key = document.body.classList.contains('light') ? 'light_all' : 'dark_all';
-  if(key === radar.baseKey) return;
-  if(radar.base) radar.map.removeLayer(radar.base);
-  radar.base = L.tileLayer('https://{s}.basemaps.cartocdn.com/' + key + '/{z}/{x}/{y}{r}.png', {
-    subdomains:'abcd', maxZoom:19,
-    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
-  }).addTo(radar.map);
-  radar.base.bringToBack();
-  radar.baseKey = key;
+function nextFullMoon(fromMs){
+  const step = 6 * 36e5;
+  let prev = moonInfo(fromMs).phase;
+  for(let ms = fromMs + step; ms < fromMs + 31 * DAYMS; ms += step){
+    const ph = moonInfo(ms).phase;
+    if(prev < 0.5 && ph >= 0.5){
+      let lo = ms - step, hi = ms;                       // bisection to ~1 minute
+      while(hi - lo > 6e4){ const mid = (lo + hi) / 2; if(moonInfo(mid).phase < 0.5) lo = mid; else hi = mid; }
+      return hi;
+    }
+    prev = ph;
+  }
+  return null;
 }
-function radarCenter(){
-  if(!radar.map || !state.loc) return;
-  const ll = [state.loc.lat, state.loc.lon];
-  if(!radar.marker){
-    radar.marker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me-dot"></div>', iconSize:[16,16], iconAnchor:[8,8]}), interactive:false, keyboard:false}).addTo(radar.map);
-  }else radar.marker.setLatLng(ll);
-  radar.map.setView(ll, radar.map.getZoom() || 7, {animate:false});
+function phaseIdx(p){
+  if(p < 0.03 || p >= 0.97) return 0;
+  if(p < 0.22) return 1; if(p < 0.28) return 2; if(p < 0.47) return 3;
+  if(p < 0.53) return 4; if(p < 0.72) return 5; if(p < 0.78) return 6; return 7;
 }
-async function radarLoadFrames(){
-  if(radar.loading) return;
-  radar.loading = true;
+function moonPath(p, r, cx, cy){
+  const waxing = p < 0.5, c = Math.cos(2 * Math.PI * p), rx = Math.abs(c) * r;
+  if(p < 0.015 || p > 0.985) return '';
+  const limb = 'M' + cx + ' ' + (cy - r) + ' A' + r + ' ' + r + ' 0 0 ' + (waxing ? 1 : 0) + ' ' + cx + ' ' + (cy + r);
+  const sweep = waxing ? (c > 0 ? 0 : 1) : (c > 0 ? 1 : 0);
+  return limb + ' A' + rx.toFixed(2) + ' ' + r + ' 0 0 ' + sweep + ' ' + cx + ' ' + (cy - r) + ' Z';
+}
+function fmtTime(ms){
+  if(ms === null || !num(ms)) return '--:--';
+  try{ return new Date(ms).toLocaleTimeString(t('locale'), Object.assign({timeZone:state.wx.timezone}, TIME_OPTS)); }
+  catch(e){ return new Date(ms).toLocaleTimeString(t('locale'), TIME_OPTS); }
+}
+function renderMoon(){
+  const wx = state.wx;
+  const now = Date.now();
+  const mi = moonInfo(now), idx = phaseIdx(mi.phase);
+  const south = wx.latitude < 0;
+  const lit = $('#moonLit');
+  lit.setAttribute('d', moonPath(mi.phase, 40, 50, 50));
+  lit.setAttribute('transform', south ? 'translate(100,0) scale(-1,1)' : '');
+  $('#moonPhase').textContent = t('moonPhases')[idx];
+  $('#moonIllum').textContent = t('moonIllum', {p:Math.round(mi.fraction * 100)});
+  // local midnight of the place (utc_offset_seconds is the place's current offset)
+  const day = wx.current.time.slice(0, 10).split('-').map(Number);
+  const start = Date.UTC(day[0], day[1] - 1, day[2]) - (wx.utc_offset_seconds || 0) * 1000;
+  const mt = moonTimes(start, wx.latitude, wx.longitude);
+  $('#moonRise').textContent = fmtTime(mt.rise);
+  $('#moonSet').textContent = fmtTime(mt.set);
+  const nf = nextFullMoon(now);
+  let nfTxt = '';
+  if(nf && idx !== 4){
+    try{ nfTxt = t('nextFull', {d:new Date(nf).toLocaleDateString(t('locale'), {weekday:'short', day:'numeric', month:'long', timeZone:wx.timezone})}); }catch(e){}
+  }
+  $('#moonNext').textContent = nfTxt;
+  $('#moonCard').classList.remove('hidden');
+}
+
+/* =====================================================================
+   Earthquakes (EMSC, fallback USGS) — last 7 days, 300 km
+   ===================================================================== */
+async function fetchQuakes(lat, lon){
+  const since = new Date(Date.now() - 7 * DAYMS).toISOString().slice(0, 19);
+  const parseTime = v => typeof v === 'number' ? v : Date.parse(v);
   try{
-    const d = await getJSON('https://api.rainviewer.com/public/weather-maps.json', 12000);
-    const frames = (d && d.radar && Array.isArray(d.radar.past)) ? d.radar.past.filter(f => f && f.path && num(f.time)) : [];
-    if(!d.host || !frames.length) throw new Error('no frames');
-    Object.values(radar.layers).forEach(l => { if(radar.map.hasLayer(l)) radar.map.removeLayer(l); });
-    radar.layers = {};
-    radar.host = d.host; radar.frames = frames; radar.loadedAt = Date.now();
-    const sl = $('#radarSlider'); sl.max = frames.length - 1;
-    radarShow(frames.length - 1);
-    radarMsg(t('radarHint'));
-  }catch(e){
-    radarMsg(t('radarErr'));
-  }finally{ radar.loading = false; }
-}
-function frameLayer(i){
-  const f = radar.frames[i];
-  if(!radar.layers[f.path]){
-    // 512 px tiles at zoom-1 => 4x fewer requests; native zoom capped at 7 by the API
-    radar.layers[f.path] = L.tileLayer(radar.host + f.path + '/512/{z}/{x}/{y}/2/1_1.png', {
-      tileSize:512, zoomOffset:-1, maxNativeZoom:8, maxZoom:10, opacity:0, zIndex:10,
-      attribution:'<a href="https://www.rainviewer.com" target="_blank" rel="noopener">RainViewer</a>'
+    const url = 'https://www.seismicportal.eu/fdsnws/event/1/query?format=json&nodata=204&orderby=time&limit=40&minmag=2.5' +
+      '&lat=' + lat.toFixed(3) + '&lon=' + lon.toFixed(3) + '&maxradius=2.7&starttime=' + since;
+    const res = await fetchWithTimeout(url, 12000);
+    if(res.status === 204) return {src:'EMSC', list:[]};
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const d = await res.json();
+    const list = (d.features || []).map(f => {
+      const p = f.properties || {}, g = (f.geometry && f.geometry.coordinates) || [];
+      return {mag:p.mag, time:parseTime(p.time), lat:num(p.lat) ? p.lat : g[1], lon:num(p.lon) ? p.lon : g[0],
+        depth:num(p.depth) ? p.depth : Math.abs(g[2] || 0), place:p.flynn_region || '',
+        url:p.unid ? 'https://www.seismicportal.eu/eventdetails.html?unid=' + encodeURIComponent(p.unid) : null};
     });
+    return {src:'EMSC', list};
+  }catch(e){
+    const url = 'https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&orderby=time&limit=40&minmagnitude=2.5' +
+      '&latitude=' + lat.toFixed(3) + '&longitude=' + lon.toFixed(3) + '&maxradiuskm=300&starttime=' + since;
+    const d = await getJSON(url, 12000);
+    const list = (d.features || []).map(f => {
+      const p = f.properties || {}, g = (f.geometry && f.geometry.coordinates) || [];
+      return {mag:p.mag, time:parseTime(p.time), lat:g[1], lon:g[0], depth:Math.abs(g[2] || 0), place:p.place || '', url:p.url || null};
+    });
+    return {src:'USGS', list};
   }
-  return radar.layers[f.path];
 }
-function radarShow(i){
-  const n = radar.frames.length;
-  if(!n || !radar.map) return;
-  i = ((i % n) + n) % n;
-  const cur = frameLayer(i), nxt = frameLayer((i + 1) % n);
-  // Only the visible frame and the next one stay on the map: limits requests to the API's rate limit
-  Object.values(radar.layers).forEach(l => { if(l !== cur && l !== nxt && radar.map.hasLayer(l)) radar.map.removeLayer(l); });
-  [cur, nxt].forEach(l => { if(!radar.map.hasLayer(l)) l.addTo(radar.map); });
-  if(nxt !== cur) nxt.setOpacity(0);
-  cur.setOpacity(0.8);
-  radar.idx = i;
-  $('#radarSlider').value = i;
-  const f = radar.frames[i];
-  const tz = state.wx && state.wx.timezone;
-  let hm;
-  try{ hm = new Date(f.time * 1000).toLocaleTimeString(t('locale'), Object.assign({timeZone:tz || undefined}, TIME_OPTS)); }
-  catch(e){ hm = new Date(f.time * 1000).toLocaleTimeString(t('locale'), TIME_OPTS); }
-  const ago = Math.max(0, Math.round((radar.frames[n - 1].time - f.time) / 60));
-  $('#radarTime').innerHTML = esc(hm) + '<small>' + esc(i === n - 1 ? t('radarLatest') : t('radarAgo', {m:ago})) + '</small>';
+async function fetchWithTimeout(url, ms){
+  const ctrl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), ms) : null;
+  try{ return await fetch(url, ctrl ? {signal:ctrl.signal} : undefined); }
+  finally{ if(timer) clearTimeout(timer); }
 }
-function radarPlay(on){
-  clearInterval(radar.timer); radar.timer = null;
-  $('#radarPlay').innerHTML = '<i class="fa-solid fa-' + (on ? 'pause' : 'play') + '"></i>';
-  if(!on || radar.frames.length < 2) return;
-  let hold = 0;
-  radar.timer = setInterval(() => {
-    if(radar.idx === radar.frames.length - 1 && hold < 2){ hold++; return; }   // pause briefly on the latest frame
-    hold = 0;
-    radarShow(radar.idx + 1);
-  }, 650);
+const titleCase = s => String(s).toLowerCase().replace(/(^|[\s,\-(/])([a-z])/g, (m, a, b) => a + b.toUpperCase());
+function bearing(a, b, c, d){
+  const y = Math.sin((d - b) * RAD) * Math.cos(c * RAD);
+  const x = Math.cos(a * RAD) * Math.sin(c * RAD) - Math.sin(a * RAD) * Math.cos(c * RAD) * Math.cos((d - b) * RAD);
+  return (Math.atan2(y, x) / RAD + 360) % 360;
 }
-function radarMsg(m){ $('#radarMsg').textContent = m; }
+function agoText(ms){
+  const diff = (ms - Date.now()) / 1000, a = Math.abs(diff);
+  try{
+    const rtf = new Intl.RelativeTimeFormat(t('locale'), {numeric:'auto'});
+    if(a < 3600) return rtf.format(Math.round(diff / 60), 'minute');
+    if(a < 86400) return rtf.format(Math.round(diff / 3600), 'hour');
+    return rtf.format(Math.round(diff / 86400), 'day');
+  }catch(e){ return Math.round(a / 3600) + 'h'; }
+}
+const magColor = m => m >= 5 ? '#ff4d4d' : m >= 4 ? '#ff9233' : m >= 3 ? '#ffd23f' : '#a3e048';
+function renderQuakes(){
+  const q = state.quakes, card = $('#eqCard');
+  card.classList.remove('hidden');
+  if(!q){ $('#eqList').innerHTML = '<div class="empty" style="padding:10px 0">' + esc(t('quakeErr')) + '</div>'; $('#eqNote').textContent = ''; return; }
+  const L = state.loc;
+  const list = q.list.filter(e => num(e.mag) && num(e.lat) && num(e.lon) && num(e.time))
+    .map(e => Object.assign({}, e, {km:haversineKm(L.lat, L.lon, e.lat, e.lon)}))
+    .filter(e => e.km <= 300).sort((a, b) => b.time - a.time).slice(0, 6);
+  if(!list.length){
+    $('#eqList').innerHTML = '<div class="empty" style="padding:10px 0"><i class="fa-regular fa-circle-check"></i>' + esc(t('quakeNone')) + '</div>';
+  }else{
+    $('#eqList').innerHTML = list.map(e => {
+      const tag = e.url ? 'a' : 'div';
+      return '<' + tag + ' class="eq"' + (e.url ? ' href="' + esc(e.url) + '" target="_blank" rel="noopener"' : '') + '>' +
+        '<div class="mag" style="background:' + magColor(e.mag) + '">' + fmt1(Math.round(e.mag * 10) / 10) + '</div>' +
+        '<div style="min-width:0"><div class="ep">' + esc(titleCase(e.place)) + '</div>' +
+        '<div class="em">' + esc(t('quakeMeta', {km:Math.round(e.km), dir:compass(bearing(L.lat, L.lon, e.lat, e.lon)), dep:Math.round(e.depth)})) + '</div></div>' +
+        '<div class="et">' + esc(agoText(e.time)) + '</div></' + tag + '>';
+    }).join('');
+  }
+  $('#eqNote').textContent = t('quakeNote', {src:q.src});
+}
+
+/* =====================================================================
+   Forecast confidence (agreement of ECMWF, GFS and ICON)
+   ===================================================================== */
+async function fetchModels(lat, lon){
+  const base = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4) +
+    '&daily=temperature_2m_max,precipitation_sum&timezone=auto&forecast_days=5&models=';
+  let d;
+  try{ d = await getJSON(base + 'ecmwf_ifs025,gfs_seamless,icon_seamless'); }
+  catch(e){ d = await getJSON(base + 'ecmwf_ifs,gfs_seamless,icon_seamless'); }
+  const daily = d && d.daily; if(!daily) return null;
+  const tKeys = Object.keys(daily).filter(k => k.indexOf('temperature_2m_max_') === 0);
+  if(tKeys.length < 2) return null;
+  const levels = daily.time.map((x, i) => {
+    const temps = tKeys.map(k => daily[k][i]).filter(num);
+    const rains = tKeys.map(k => daily['precipitation_sum_' + k.slice('temperature_2m_max_'.length)]).filter(Boolean).map(a => a[i]).filter(num);
+    if(temps.length < 2) return null;
+    const spread = Math.max(...temps) - Math.min(...temps);
+    const wet = rains.filter(v => v >= 1).length, agree = wet === 0 || wet === rains.length;
+    if(spread <= 2.5 && agree) return 2;
+    if(spread <= 5 && (agree || wet === 1 || wet === rains.length - 1)) return 1;
+    return 0;
+  });
+  return levels;
+}
+
+/* =====================================================================
+   Seasonal normal (1991–2020 daily max, ±3 days) — cached per place
+   ===================================================================== */
+const doy = (m, d) => Math.round((Date.UTC(2000, m - 1, d) - Date.UTC(2000, 0, 1)) / DAYMS);   // 0..365 on a leap year
+async function fetchNormals(lat, lon){
+  const key = 'wx_norm_' + lat.toFixed(1) + ',' + lon.toFixed(1);
+  const cached = store.get(key, null);
+  if(Array.isArray(cached) && cached.length === 366) return cached;
+  const d = await getJSON('https://archive-api.open-meteo.com/v1/archive?latitude=' + lat.toFixed(2) + '&longitude=' + lon.toFixed(2) +
+    '&start_date=1991-01-01&end_date=2020-12-31&daily=temperature_2m_max&timezone=auto', 25000);
+  const tm = d && d.daily && d.daily.time, tx = d && d.daily && d.daily.temperature_2m_max;
+  if(!tm || !tx) return null;
+  const sum = new Array(366).fill(0), cnt = new Array(366).fill(0);
+  tm.forEach((x, i) => { if(!num(tx[i])) return; const k = doy(+x.slice(5, 7), +x.slice(8, 10)); sum[k] += tx[i]; cnt[k]++; });
+  const out = [];
+  for(let k = 0; k < 366; k++){
+    let s = 0, c = 0;
+    for(let o = -3; o <= 3; o++){ const j = (k + o + 366) % 366; s += sum[j]; c += cnt[j]; }
+    out.push(c ? Math.round(s / c * 10) / 10 : null);
+  }
+  store.set(key, out);
+  return out;
+}
+function renderNormal(){
+  const chip = $('#normChip'), n = state.normals, wx = state.wx;
+  if(!n || !wx){ chip.classList.add('hidden'); return; }
+  const md = wx.daily.time[0];
+  const normal = n[doy(+md.slice(5, 7), +md.slice(8, 10))], today = wx.daily.temperature_2m_max[0];
+  if(!num(normal) || !num(today)){ chip.classList.add('hidden'); return; }
+  const diff = Math.round((today - normal) * 10) / 10;
+  let txt, icon;
+  if(Math.abs(diff) < 1.5){ txt = t('normNormal'); icon = 'fa-equals'; }
+  else if(diff > 0){ txt = t('normAbove', {d:fmt1(Math.round(diff))}); icon = 'fa-arrow-trend-up'; }
+  else { txt = t('normBelow', {d:fmt1(Math.round(-diff))}); icon = 'fa-arrow-trend-down'; }
+  chip.innerHTML = '<i class="fa-solid ' + icon + '"></i>' + esc(txt);
+  chip.classList.remove('hidden');
+}
+
+/* =====================================================================
+   Hourly helpers
+   ===================================================================== */
+function nowIdx(){
+  const h = state.wx.hourly, cur = state.wx.current.time.slice(0, 13);
+  const i = h.time.findIndex(x => x.slice(0, 13) === cur);
+  return i < 0 ? 0 : i;
+}
+const H = (k, i) => { const a = state.wx.hourly[k]; return a && num(a[i]) ? a[i] : null; };
+function dayLabel(iso){
+  const t0 = state.wx.daily.time;
+  if(iso.slice(0, 10) === t0[0]) return t('today');
+  if(iso.slice(0, 10) === t0[1]) return t('tomorrow');
+  return dayShort(iso);
+}
+const hLabel = iso => iso.slice(11, 16);
+
+/* =====================================================================
+   Severe-weather alerts (derived from the forecast, next 48 h)
+   ===================================================================== */
+const LVL = ['', '#ffd23f', '#ff9233', '#ff4d4d'];
+function computeAlerts(){
+  const wx = state.wx, h = wx.hourly, s = nowIdx(), e = Math.min(s + 48, h.time.length);
+  const out = [];
+  function scan(test){
+    let first = -1, last = -1;
+    for(let i = s; i < e; i++){ if(test(i)){ if(first < 0) first = i; last = i; } }
+    return first < 0 ? null : {first, last};
+  }
+  function when(r){
+    const a = h.time[r.first], b = h.time[r.last];
+    const endH = String((+b.slice(11, 13) + 1) % 24).padStart(2, '0') + ':00';
+    return t('alWhen', {day:dayLabel(a), from:hLabel(a), to:endH});
+  }
+  function maxOf(k, r){ let m = -Infinity; for(let i = r.first; i <= r.last; i++){ const v = H(k, i); if(v !== null && v > m) m = v; } return m; }
+  function minOf(k, r){ let m = Infinity; for(let i = r.first; i <= r.last; i++){ const v = H(k, i); if(v !== null && v < m) m = v; } return m; }
+  let r;
+  if((r = scan(i => H('temperature_2m', i) >= 37))){ const m = maxOf('temperature_2m', r); out.push({lvl:m >= 41 ? 3 : m >= 39 ? 2 : 1, icon:'fa-temperature-arrow-up', title:t('alHeat'), det:t('alUpTo', {v:Math.round(m)}), when:when(r)}); }
+  if((r = scan(i => H('temperature_2m', i) !== null && H('temperature_2m', i) <= 0))){ const m = minOf('temperature_2m', r); out.push({lvl:m <= -5 ? 2 : 1, icon:'fa-temperature-arrow-down', title:t('alFrost'), det:t('alUpTo', {v:Math.round(m)}), when:when(r)}); }
+  if((r = scan(i => H('wind_gusts_10m', i) >= 65))){ const m = maxOf('wind_gusts_10m', r); out.push({lvl:m >= 100 ? 3 : m >= 80 ? 2 : 1, icon:'fa-wind', title:t('alWind'), det:t('alWindD', {v:Math.round(m)}), when:when(r)}); }
+  if((r = scan(i => H('precipitation', i) >= 7))){ const m = maxOf('precipitation', r); out.push({lvl:m >= 30 ? 3 : m >= 15 ? 2 : 1, icon:'fa-cloud-showers-heavy', title:t('alRain'), det:t('alRainD', {v:fmt1(Math.round(m * 10) / 10)}), when:when(r)}); }
+  if((r = scan(i => [95, 96, 99].includes(H('weather_code', i))))){
+    let hail = false; for(let i = r.first; i <= r.last; i++) if([96, 99].includes(H('weather_code', i))) hail = true;
+    out.push({lvl:hail ? 3 : 2, icon:'fa-cloud-bolt', title:t(hail ? 'alHail' : 'alStorm'), det:'', when:when(r)});
+  }
+  if(h.snowfall){
+    let total = 0; for(let i = s; i < e; i++) total += H('snowfall', i) || 0;
+    if(total >= 1 && (r = scan(i => (H('snowfall', i) || 0) > 0))) out.push({lvl:total >= 10 ? 3 : total >= 5 ? 2 : 1, icon:'fa-snowflake', title:t('alSnow'), det:t('alSnowD', {v:fmt1(Math.round(total))}), when:when(r)});
+  }
+  if((r = scan(i => H('uv_index', i) >= 9))){ const m = maxOf('uv_index', r); out.push({lvl:m >= 11 ? 2 : 1, icon:'fa-sun', title:t('alUV'), det:t('alUVD', {v:Math.round(m)}), when:when(r)}); }
+  if((r = scan(i => [45, 48].includes(H('weather_code', i))))) out.push({lvl:1, icon:'fa-smog', title:t('alFog'), det:'', when:when(r)});
+  // a strong, recent earthquake close by
+  if(state.quakes){
+    const L = state.loc;
+    const big = state.quakes.list.filter(q => num(q.mag) && q.mag >= 4.5 && Date.now() - q.time < DAYMS && haversineKm(L.lat, L.lon, q.lat, q.lon) <= 150)
+      .sort((a, b) => b.mag - a.mag)[0];
+    if(big) out.push({lvl:big.mag >= 5.5 ? 3 : 2, icon:'fa-house-crack', title:t('alQuake', {m:fmt1(Math.round(big.mag * 10) / 10)}),
+      det:t('alQuakeD', {km:Math.round(haversineKm(L.lat, L.lon, big.lat, big.lon)), ago:agoText(big.time)}), when:''});
+  }
+  return out.sort((a, b) => b.lvl - a.lvl);
+}
+function renderAlerts(){
+  const list = computeAlerts(), box = $('#alerts');
+  if(!list.length){ box.innerHTML = ''; return; }
+  const weatherOnly = list.some(a => a.icon !== 'fa-house-crack');
+  box.innerHTML = list.map(a =>
+    '<div class="alert glass" style="--lvl:' + LVL[a.lvl] + '"><div class="ai"><i class="fa-solid ' + a.icon + '"></i></div>' +
+    '<div><b>' + esc(a.title) + '</b><span>' + esc([a.det, a.when].filter(Boolean).join(' · ')) + '</span></div></div>').join('') +
+    (weatherOnly ? '<div class="alert-note">' + esc(t('alNote')) + ' <a href="https://www.emy.gr" target="_blank" rel="noopener">' + esc(t('alLink')) + '</a></div>' : '');
+}
+
+/* =====================================================================
+   Smart summary
+   ===================================================================== */
+function buildSummary(){
+  const wx = state.wx, c = wx.current, d = wx.daily, s = nowIdx(), h = wx.hourly;
+  const e12 = Math.min(s + 12, h.time.length);
+  const hourNow = +c.time.slice(11, 13), evening = hourNow >= 18;
+  const items = [];
+  const lc = x => x.charAt(0).toLocaleLowerCase(t('locale')) + x.slice(1);
+  if(!evening){
+    items.push(['fa-calendar-day', t('sumToday', {desc:lc(wDesc(d.weather_code[0])), min:r0(d.temperature_2m_min[0]), max:r0(d.temperature_2m_max[0])})]);
+  }else{
+    let mn = Infinity; for(let i = s; i < e12; i++){ const v = H('temperature_2m', i); if(v !== null && v < mn) mn = v; }
+    const code = H('weather_code', Math.min(s + 3, h.time.length - 1));
+    items.push(['fa-moon', t('sumTonight', {desc:lc(wDesc(code !== null ? code : c.weather_code)), min:r0(mn)})]);
+  }
+  // rain / snow in the next 12 h
+  const wetAt = i => (H('precipitation_probability', i) || 0) >= 50 || (H('precipitation', i) || 0) >= 0.3;
+  let first = -1; for(let i = s; i < e12; i++) if(wetAt(i)){ first = i; break; }
+  if(first === s && (H('precipitation', s) || 0) >= 0.1 && ['rain', 'storm'].includes(wmo(c.weather_code)[4])) items.push(['fa-umbrella', t('sumRainNow')]);
+  else if(first >= 0){
+    const snow = wmo(H('weather_code', first))[4] === 'snow';
+    items.push([snow ? 'fa-snowflake' : 'fa-umbrella', t(snow ? 'sumSnowAt' : 'sumRainAt', {h:hLabel(h.time[first])})]);
+  }else{
+    let mx = 0; for(let i = s; i < e12; i++) mx = Math.max(mx, H('precipitation_probability', i) || 0);
+    if(mx < 25) items.push(['fa-umbrella-beach', t('sumDry')]);
+  }
+  // wind
+  let gMax = 0, gAt = s; for(let i = s; i < e12; i++){ const g = H('wind_gusts_10m', i) || 0; if(g > gMax){ gMax = g; gAt = i; } }
+  if(gMax >= 45) items.push(['fa-wind', t('sumWind', {g:Math.round(gMax), h:hLabel(h.time[gAt])})]);
+  // UV (daytime only)
+  if(!evening && num(d.uv_index_max[0]) && d.uv_index_max[0] >= 6) items.push(['fa-sun', t('sumUV', {v:Math.round(d.uv_index_max[0])})]);
+  // clothing, from the feels-like temperature of the next 12 h
+  let aMin = Infinity, aMax = -Infinity; for(let i = s; i < e12; i++){ const v = H('apparent_temperature', i); if(v !== null){ aMin = Math.min(aMin, v); aMax = Math.max(aMax, v); } }
+  if(isFinite(aMin)){
+    const feel = (aMin + aMax) / 2, k = feel < 5 ? 0 : feel < 12 ? 1 : feel < 18 ? 2 : feel < 25 ? 3 : 4;
+    items.push(['fa-shirt', t('sumWear', {item:t('wear')[k]})]);
+  }
+  // tomorrow
+  if(d.temperature_2m_max.length > 1){
+    const diff = d.temperature_2m_max[1] - d.temperature_2m_max[0];
+    if(diff >= 3) items.push(['fa-arrow-trend-up', t('sumWarmer', {d:Math.round(diff)})]);
+    else if(diff <= -3) items.push(['fa-arrow-trend-down', t('sumColder', {d:Math.round(-diff)})]);
+    const p1 = d.precipitation_probability_max ? d.precipitation_probability_max[1] : null;
+    if(num(p1) && p1 >= 60) items.push(['fa-cloud-rain', t('sumTomRain', {p:p1})]);
+  }
+  if(state.conf && num(state.conf[1])) items.push(['fa-chart-simple', t('sumConf', {lvl:t('confL')[state.conf[1]]})]);
+  return items;
+}
+function renderSummary(){
+  const items = buildSummary();
+  $('#sumList').innerHTML = items.map(x => '<li><i class="fa-solid ' + x[0] + '"></i><span>' + esc(x[1]) + '</span></li>').join('');
+  $('#sumCard').classList.toggle('hidden', !items.length);
+}
+
+/* =====================================================================
+   "Good day for…" activity scores (0–10)
+   ===================================================================== */
+function activityWindow(){
+  const wx = state.wx, h = wx.hourly, s = nowIdx(), hourNow = +wx.current.time.slice(11, 13);
+  const today = wx.daily.time[0], tomorrow = wx.daily.time[1];
+  let date = today, from = Math.max(hourNow, 8);
+  if(hourNow >= 17){ date = tomorrow; from = 9; }
+  const idx = [];
+  h.time.forEach((x, i) => { if(x.slice(0, 10) === date){ const hr = +x.slice(11, 13); if(hr >= from && hr <= 19) idx.push(i); } });
+  return {idx, when:date === today ? t('actsToday') : t('actsTomorrow'), s};
+}
+function renderActivities(){
+  const w = activityWindow(), card = $('#actsCard');
+  if(!w.idx.length){ card.classList.add('hidden'); return; }
+  const avg = k => { const v = w.idx.map(i => H(k, i)).filter(x => x !== null); return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null; };
+  const mx = k => { const v = w.idx.map(i => H(k, i)).filter(x => x !== null); return v.length ? Math.max(...v) : null; };
+  const tA = avg('apparent_temperature'), tMax = mx('temperature_2m'), pop = mx('precipitation_probability') || 0;
+  const wind = avg('wind_speed_10m') || 0, gust = mx('wind_gusts_10m') || 0, uv = mx('uv_index') || 0, hum = avg('relative_humidity_2m') || 60;
+  const rain = w.idx.reduce((a, i) => a + (H('precipitation', i) || 0), 0);
+  const storm = w.idx.some(i => [95, 96, 99].includes(H('weather_code', i)));
+  const pos = x => Math.max(0, x);
+  const comfort = (v, lo, hi, k) => v === null ? 3 : v < lo ? (lo - v) * k : v > hi ? (v - hi) * k : 0;
+  const score = pen => Math.max(0, Math.min(10, Math.round(10 - pen - (storm ? 6 : 0))));
+  const sea = state.sea && state.sea.current && !$('#seaCard').classList.contains('hidden') ? state.sea.current : null;
+  const acts = [
+    ['fa-person-running', 'actRun', score(comfort(tA, 8, 20, 0.6) + pop * 0.06 + pos(wind - 20) * 0.15 + pos(uv - 6) * 0.5)],
+    ['fa-person-biking', 'actBike', score(comfort(tA, 12, 26, 0.5) + pop * 0.07 + pos(wind - 15) * 0.25 + pos(gust - 35) * 0.1)],
+    ['fa-person-hiking', 'actHike', score(comfort(tA, 10, 24, 0.5) + pop * 0.07 + pos(gust - 40) * 0.1 + pos(uv - 7) * 0.5)],
+    ['fa-utensils', 'actDine', score(comfort(tA, 18, 28, 0.6) + pop * 0.08 + pos(wind - 18) * 0.25)],
+    ['fa-shirt', 'actLaundry', score(pop * 0.1 + pos(hum - 70) * 0.15 + (rain > 0.2 ? 5 : 0) + comfort(tA, 12, 40, 0.3))]
+  ];
+  if(sea){
+    const sst = num(sea.sea_surface_temperature) ? sea.sea_surface_temperature : null, wh = num(sea.wave_height) ? sea.wave_height : 0;
+    acts.splice(3, 0, ['fa-person-swimming', 'actBeach', score(comfort(tMax, 26, 36, 0.7) + (sst === null ? 3 : pos(22 - sst) * 1.2) + pos(wh - 0.5) * 6 + pos(wind - 20) * 0.2 + pop * 0.05)]);
+    acts.push(['fa-fish', 'actFish', score(pos(wind - 15) * 0.25 + pos(wh - 0.8) * 5 + pop * 0.04)]);
+  }
+  const colors = ['#ff6b6b', '#ffd23f', '#a3e048', '#3ddc84'];
+  $('#actsTitle').textContent = t('actsTitle', {when:w.when});
+  $('#actsGrid').innerHTML = acts.map(a => {
+    const sc = a[2], li = sc >= 8 ? 3 : sc >= 6 ? 2 : sc >= 4 ? 1 : 0;
+    return '<div class="act"><div class="an"><i class="fa-solid ' + a[0] + '"></i>' + esc(t(a[1])) + '</div>' +
+      '<div class="ab"><span style="width:' + (sc * 10) + '%;background:' + colors[li] + '"></span></div>' +
+      '<div class="as"><span>' + esc(t('scoreL')[li]) + '</span><b>' + sc + '/10</b></div></div>';
+  }).join('');
+  card.classList.remove('hidden');
+}
+
+/* =====================================================================
+   Secondary data (loaded after the main forecast; each part may fail alone)
+   ===================================================================== */
+function loadExtras(loc, req){
+  const done = () => { if(req === state.reqId) renderExtras(); };
+  fetchModels(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.conf = v; done(); } }).catch(() => { if(req === state.reqId){ state.conf = null; done(); } });
+  fetchNormals(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.normals = v; done(); } }).catch(() => { if(req === state.reqId){ state.normals = null; done(); } });
+  fetchQuakes(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.quakes = v; done(); } }).catch(() => { if(req === state.reqId){ state.quakes = null; state.quakesFailed = true; done(); } });
+}
+function renderExtras(){
+  if(!state.wx) return;
+  const parts = [renderNormal, renderAlerts, renderSummary, renderActivities, renderMoon, renderDays];
+  if(state.quakes || state.quakesFailed) parts.push(renderQuakes);
+  parts.forEach(fn => { try{ fn(); }catch(e){ console.error(e); } });
+  $('#confNote').classList.toggle('hidden', !state.conf);
+}
 
 /* =====================================================================
    Live effects (canvas)
@@ -1459,9 +1942,8 @@ function switchView(v){
   $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + v));
   $$('nav.bottom button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   $('#main').scrollTop = 0;
-  if(prev === 'radar' && v !== 'radar') radarPlay(false);
   if(v === 'forecast') setTimeout(renderChart, 30);
-  if(v === 'radar') radarOpen();
+  if(v === 'map') mapOpen();
 }
 function setLang(l){
   if(!I18N[l] || l === lang) return;
@@ -1471,7 +1953,7 @@ function setLang(l){
   if($('#q').value.trim().length >= 2) doSearch($('#q').value.trim());
   if(state.wx) renderAll(); else renderHeader();
   if(state.view === 'forecast') renderChart();
-  if(radar.frames.length) radarShow(radar.idx);
+  renderLayers();
 }
 let toastTimer;
 function toast(msg){
@@ -1527,9 +2009,13 @@ $('#btnLocate').addEventListener('click', locate);
 $('#btnLocate2').addEventListener('click', locate);
 $('#btnRefresh').addEventListener('click', () => {
   if(state.loc) loadWeather(state.loc);
-  if(state.view === 'radar'){ radar.loadedAt = 0; radarOpen(); }
 });
 $('#aqiTile').addEventListener('click', () => switchView('air'));
+$('#layers').addEventListener('click', e => {
+  const b = e.target.closest('button[data-layer]'); if(!b) return;
+  map.layer = b.dataset.layer; store.set('wx_layer', map.layer);
+  renderLayers(); mapOpen();
+});
 $$('#modeSeg button').forEach(b => b.addEventListener('click', () => {
   $$('#modeSeg button').forEach(x => x.classList.toggle('on', x === b));
   state.mode = b.dataset.mode;
@@ -1538,8 +2024,6 @@ $$('#modeSeg button').forEach(b => b.addEventListener('click', () => {
 }));
 $$('#langSeg button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
 $$('#fxSeg button').forEach(b => b.addEventListener('click', () => setFx(b.dataset.fx === '1')));
-$('#radarPlay').addEventListener('click', () => radarPlay(!radar.timer));
-$('#radarSlider').addEventListener('input', e => { radarPlay(false); radarShow(+e.target.value); });
 $('#q').addEventListener('input', e => {
   const v = e.target.value.trim();
   $('#qClear').style.display = v ? 'block' : 'none';
@@ -1554,11 +2038,10 @@ $('#results').addEventListener('click', e => {
 });
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden){ hiddenAt = Date.now(); fxStop(false); radarPlay(false); return; }
+  if(document.hidden){ hiddenAt = Date.now(); fxStop(false); return; }
   fxStart();
   if(state.loc && Date.now() - hiddenAt > 10 * 60 * 1000){
     loadWeather(state.loc);
-    if(state.view === 'radar'){ radar.loadedAt = 0; radarOpen(); }
   }
 });
 let resizeT;
@@ -1567,7 +2050,6 @@ window.addEventListener('resize', () => {
   resizeT = setTimeout(() => {
     fxResize();
     if(state.wx && state.view === 'forecast') renderChart();
-    if(radar.map) radar.map.invalidateSize();
   }, 200);
 });
 
@@ -1578,6 +2060,7 @@ fx.canvas = $('#fx'); fx.ctx = fx.canvas.getContext('2d');
 fxResize();
 setupPWA();
 applyStatic();
+renderLayers();
 applyTheme('clear-day');
 renderRecent();
 const saved = store.get('wx_loc', null);
@@ -1597,7 +2080,7 @@ if(saved && num(saved.lat) && num(saved.lon)){
   }
 }
 // Test hook (harmless in production)
-window.__wx = {state, radar, fx, setLang, switchView, renderAll, t};
+window.__wx = {state, fx, setLang, switchView, renderAll, t, moonInfo, moonTimes};
 })();
 </script>
 </body>
