@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#2b8ff0">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Καιρός">
+<meta name="application-name" content="Καιρός">
+<meta name="format-detection" content="telephone=no">
+<meta name="description" content="Premium εφαρμογή καιρού με δεδομένα Open-Meteo">
+<title>Καιρός</title>
+<link rel="manifest" id="manifestLink">
+<link rel="apple-touch-icon" id="touchIcon">
+<link rel="icon" id="favIcon">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root{
+  --ink:#ffffff;
+  --ink-soft:rgba(255,255,255,.72);
+  --glass:rgba(255,255,255,.16);
+  --glass-b:rgba(255,255,255,.28);
+  --shadow:0 8px 32px rgba(0,0,0,.18);
+  --glow:rgba(255,255,255,.18);
+  --nav-h:68px;
+}
+body.light{
+  --ink:#16202c;
+  --ink-soft:rgba(22,32,44,.66);
+  --glass:rgba(255,255,255,.42);
+  --glass-b:rgba(255,255,255,.75);
+  --shadow:0 8px 28px rgba(40,60,90,.15);
+  --glow:rgba(255,255,255,.5);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  color:var(--ink);background:#1e3c72;overflow:hidden;
+  transition:color .8s ease;-webkit-font-smoothing:antialiased;
+  user-select:none;-webkit-user-select:none;overscroll-behavior:none;
+}
+input{user-select:text;-webkit-user-select:text}
+button{font-family:inherit;cursor:pointer}
+
+/* ---------- Dynamic background (crossfade between two layers) ---------- */
+.bg{position:fixed;inset:0;z-index:-3;opacity:0;transition:opacity 1.4s ease}
+.bg.on{opacity:1}
+.glow{position:fixed;inset:-25%;z-index:-2;pointer-events:none;
+  background:radial-gradient(circle at 28% 18%,var(--glow),transparent 42%),
+             radial-gradient(circle at 80% 85%,rgba(255,255,255,.08),transparent 40%);
+  animation:drift 20s ease-in-out infinite alternate;transition:background 1.4s}
+@keyframes drift{to{transform:translate(7%,5%) scale(1.05)}}
+
+/* ---------- Layout ---------- */
+#app{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
+header.top{display:flex;align-items:center;gap:10px;padding:14px 18px 8px}
+.loc{flex:1;min-width:0}
+.loc h1{font-size:1.3rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
+.loc h1 i{font-size:.95rem;opacity:.85}
+.loc p{font-size:.8rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.glass{background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--shadow)}
+.icon-btn{width:46px;height:46px;flex:none;border-radius:15px;display:grid;place-items:center;color:var(--ink);font-size:1.05rem;transition:transform .15s}
+.icon-btn:active{transform:scale(.9)}
+.icon-btn.spin i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 28px);-webkit-overflow-scrolling:touch}
+.view{display:none}
+.view.active{display:block;animation:fade .45s ease}
+@keyframes fade{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.card{border-radius:24px;padding:16px;margin-bottom:14px}
+.card-title{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px}
+
+/* ---------- Hero ---------- */
+.hero{text-align:center;padding:10px 0 22px}
+.hero .big-icon{font-size:4.6rem;filter:drop-shadow(0 8px 24px rgba(0,0,0,.18));animation:float 5s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+.hero .temp{font-size:6rem;font-weight:200;line-height:1;margin-top:8px;letter-spacing:-.04em}
+.hero .temp sup{font-size:2rem;font-weight:300;vertical-align:top;position:relative;top:.9rem;margin-left:2px}
+.hero .desc{font-size:1.15rem;font-weight:500;margin-top:6px}
+.hero .hl{font-size:.9rem;color:var(--ink-soft);margin-top:8px}
+.hero .hl b{color:var(--ink);font-weight:600}
+
+/* ---------- Tiles ---------- */
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.tile{border-radius:22px;padding:14px;min-height:128px;display:flex;flex-direction:column}
+.tile .t-head{display:flex;align-items:center;gap:7px;font-size:.72rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.tile .t-val{font-size:1.75rem;font-weight:600;margin-top:10px;line-height:1.1}
+.tile .t-val small{font-size:.9rem;font-weight:500;color:var(--ink-soft);margin-left:3px}
+.tile .t-sub{font-size:.8rem;color:var(--ink-soft);margin-top:auto;padding-top:8px}
+.bar{height:7px;border-radius:9px;background:rgba(255,255,255,.22);overflow:hidden;margin-top:10px}
+body.light .bar{background:rgba(22,32,44,.12)}
+.bar>span{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#7cc4ff,#3a8dff);transition:width 1s ease}
+.uv-scale{position:relative;height:7px;border-radius:9px;margin-top:10px;background:linear-gradient(90deg,#3ddc84 0%,#ffd23f 27%,#ff9233 50%,#ff4d4d 72%,#b46bff 100%)}
+.uv-scale i{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.35);transform:translate(-50%,-50%);transition:left 1s ease}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:20px;color:#111;margin-top:6px;width:max-content}
+.compass{width:46px;height:46px;border-radius:50%;border:2px solid var(--glass-b);display:grid;place-items:center;position:relative;flex:none}
+.compass::before{content:'Β';position:absolute;top:-1px;font-size:.55rem;font-weight:700;color:var(--ink-soft)}
+.compass i{font-size:1rem;transition:transform 1s ease}
+.wind-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.tile.link{cursor:pointer}
+.tile.link:active{transform:scale(.97)}
+
+/* ---------- Sun card ---------- */
+.sun-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
+.sun-col{text-align:center;min-width:72px}
+.sun-col i{font-size:1.25rem;margin-bottom:6px}
+.sun-col .sv{font-size:1.2rem;font-weight:600}
+.sun-col .sl{font-size:.72rem;color:var(--ink-soft)}
+.sun-arc{flex:1;max-width:200px}
+.sun-meta{text-align:center;font-size:.8rem;color:var(--ink-soft);margin-top:8px}
+
+/* ---------- Forecast ---------- */
+.seg{display:flex;padding:4px;border-radius:14px;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.12)}
+body.light .seg{background:rgba(22,32,44,.08)}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink-soft);font-weight:600;font-size:.85rem;padding:10px;border-radius:11px;transition:all .25s}
+.seg button.on{background:var(--glass-b);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin:0 -6px;padding:0 6px}
+.chart-scroll::-webkit-scrollbar{display:none}
+.chart-inner{height:270px;position:relative}
+.hint{font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:6px}
+.day{display:grid;grid-template-columns:62px 34px 46px 1fr;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--glass-b)}
+.day:last-child{border-bottom:0}
+.day .dn{font-weight:600}
+.day .dn small{display:block;font-size:.7rem;font-weight:500;color:var(--ink-soft)}
+.day .di{font-size:1.3rem;text-align:center}
+.day .dp{font-size:.78rem;color:#7cc4ff;font-weight:600}
+body.light .day .dp{color:#1f6fd1}
+.range{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600}
+.range .lo{color:var(--ink-soft);width:30px;text-align:right}
+.range .hi{width:30px}
+.range .track{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,.18);position:relative}
+body.light .range .track{background:rgba(22,32,44,.1)}
+.range .track span{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#6ec6ff,#ffd23f,#ff9233)}
+
+/* ---------- Air quality ---------- */
+.aqi-main{display:flex;align-items:center;gap:18px}
+.ring{width:128px;height:128px;flex:none;position:relative}
+.ring svg{transform:rotate(-90deg)}
+.ring .rv{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.ring .rv b{font-size:2.2rem;font-weight:700;display:block;line-height:1}
+.ring .rv small{font-size:.7rem;color:var(--ink-soft)}
+.aqi-text h3{font-size:1.25rem;font-weight:700}
+.aqi-text p{font-size:.85rem;color:var(--ink-soft);margin-top:6px;line-height:1.45}
+.poll{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.poll .tile{min-height:auto}
+.poll .t-val{font-size:1.35rem}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-left:auto}
+.aqi-legend{display:flex;gap:4px;margin-top:14px}
+.aqi-legend span{flex:1;height:6px;border-radius:4px}
+.aqi-legend-l{display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-soft);margin-top:5px}
+
+/* ---------- Search ---------- */
+.search-box{display:flex;align-items:center;gap:10px;border-radius:18px;padding:4px 6px 4px 16px;margin-bottom:12px}
+.search-box i{color:var(--ink-soft)}
+.search-box input{flex:1;background:transparent;border:0;outline:0;color:var(--ink);font-size:1rem;font-family:inherit;padding:12px 0;min-width:0}
+.search-box input::placeholder{color:var(--ink-soft)}
+.search-box button{border:0;background:transparent;color:var(--ink-soft);width:40px;height:40px;font-size:1rem;display:none}
+.locate-wide{width:100%;border-radius:18px;padding:15px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);font-size:.95rem;font-weight:600;margin-bottom:14px;transition:transform .15s}
+.locate-wide:active{transform:scale(.98)}
+.results{border-radius:22px;overflow:hidden}
+.res{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--glass-b);cursor:pointer;transition:background .2s}
+.res:last-child{border-bottom:0}
+.res:active{background:rgba(255,255,255,.15)}
+.res .flag{font-size:1.6rem;width:32px;text-align:center}
+.res .rn{font-weight:600}
+.res .rs{font-size:.78rem;color:var(--ink-soft);margin-top:2px}
+.res .chev{margin-left:auto;color:var(--ink-soft);font-size:.8rem}
+.empty{padding:26px 16px;text-align:center;color:var(--ink-soft);font-size:.9rem}
+.empty i{font-size:1.8rem;display:block;margin-bottom:10px;opacity:.7}
+.section-label{font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:6px 4px 10px}
+
+/* ---------- Bottom navigation ---------- */
+nav.bottom{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));height:var(--nav-h);display:flex;align-items:center;border-radius:26px;z-index:20}
+nav.bottom button{flex:1;height:100%;border:0;background:none;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:.68rem;font-weight:600;position:relative;transition:color .25s}
+nav.bottom button i{font-size:1.2rem;transition:transform .25s}
+nav.bottom button.active{color:var(--ink)}
+nav.bottom button.active i{transform:translateY(-2px) scale(1.08)}
+nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5px;height:5px;border-radius:50%;background:var(--ink)}
+
+/* ---------- Loader & toast ---------- */
+.loader{position:fixed;inset:0;display:grid;place-items:center;z-index:30;pointer-events:none;opacity:0;transition:opacity .3s}
+.loader.on{opacity:1}
+.loader div{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:1.4rem}
+.loader i{animation:spin 1s linear infinite}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);transform:translate(-50%,20px);opacity:0;padding:12px 18px;border-radius:16px;font-size:.85rem;font-weight:500;z-index:40;transition:all .35s;max-width:88%;text-align:center;background:rgba(15,20,35,.88);color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.updated{text-align:center;font-size:.7rem;color:var(--ink-soft);margin:4px 0 6px}
+.updated a{color:inherit}
+</style>
+</head>
+<body>
+<div class="bg on" id="bgA"></div>
+<div class="bg" id="bgB"></div>
+<div class="glow"></div>
+
+<div id="app">
+  <header class="top">
+    <div class="loc">
+      <h1><i class="fa-solid fa-location-dot"></i><span id="locName">Φόρτωση…</span></h1>
+      <p id="locSub">&nbsp;</p>
+    </div>
+    <button class="icon-btn glass" id="btnRefresh" aria-label="Ανανέωση"><i class="fa-solid fa-rotate-right"></i></button>
+    <button class="icon-btn glass" id="btnLocate" aria-label="Εντοπισμός"><i class="fa-solid fa-location-crosshairs"></i></button>
+  </header>
+
+  <main id="main">
+    <!-- ================= NOW ================= -->
+    <section class="view active" id="view-now">
+      <div class="hero">
+        <i class="fa-solid fa-sun big-icon" id="heroIcon"></i>
+        <div class="temp"><span id="temp">--</span><sup>°C</sup></div>
+        <div class="desc" id="desc">—</div>
+        <div class="hl">Αίσθηση <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+      </div>
+
+      <div class="grid">
+        <div class="tile glass">
+          <div class="t-head"><i class="fa-solid fa-droplet"></i>Υγρασία</div>
+          <div class="t-val" id="hum">--<small>%</small></div>
+          <div class="bar"><span id="humBar" style="width:0"></span></div>
+          <div class="t-sub" id="humSub">—</div>
+        </div>
+
+        <div class="tile glass">
+          <div class="t-head"><i class="fa-solid fa-wind"></i>Άνεμος</div>
+          <div class="wind-row">
+            <div class="t-val" style="margin-top:0" id="wind">--<small>km/h</small></div>
+            <div class="compass"><i class="fa-solid fa-location-arrow" id="windArrow"></i></div>
+          </div>
+          <div class="t-sub" id="windSub">—</div>
+        </div>
+
+        <div class="tile glass">
+          <div class="t-head"><i class="fa-solid fa-sun"></i>Δείκτης UV</div>
+          <div class="t-val" id="uv">--</div>
+          <div class="uv-scale"><i id="uvDot" style="left:0"></i></div>
+          <div class="t-sub"><span class="badge" id="uvBadge">—</span></div>
+        </div>
+
+        <div class="tile glass">
+          <div class="t-head"><i class="fa-solid fa-mountain-sun"></i>Υψόμετρο</div>
+          <div class="t-val" id="elev">--<small>μ</small></div>
+          <div class="t-sub" id="coords">—</div>
+        </div>
+
+        <div class="tile glass">
+          <div class="t-head"><i class="fa-solid fa-gauge-high"></i>Πίεση</div>
+          <div class="t-val" id="press">--<small>hPa</small></div>
+          <div class="t-sub" id="pressSub">—</div>
+        </div>
+
+        <div class="tile glass link" id="aqiTile">
+          <div class="t-head"><i class="fa-solid fa-lungs"></i>Ποιότητα αέρα</div>
+          <div class="t-val" id="aqiMini">--</div>
+          <div class="t-sub"><span class="badge" id="aqiMiniBadge">—</span></div>
+        </div>
+      </div>
+
+      <div class="card glass">
+        <div class="card-title"><i class="fa-solid fa-circle-half-stroke"></i>Ανατολή &amp; Δύση</div>
+        <div class="sun-wrap">
+          <div class="sun-col">
+            <i class="fa-solid fa-sun" style="color:#ffc94a"></i>
+            <div class="sv" id="sunrise">--:--</div>
+            <div class="sl">Ανατολή</div>
+          </div>
+          <svg class="sun-arc" viewBox="0 0 300 100" aria-hidden="true">
+            <path d="M20 92 A130 80 0 0 1 280 92" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="2.5" stroke-dasharray="5 7"/>
+            <line x1="8" y1="92" x2="292" y2="92" stroke="currentColor" stroke-opacity=".25" stroke-width="1.5"/>
+            <circle id="sunDotGlow" cx="20" cy="92" r="16" fill="#ffc94a" opacity=".3"/>
+            <circle id="sunDot" cx="20" cy="92" r="9" fill="#ffc94a"/>
+          </svg>
+          <div class="sun-col">
+            <i class="fa-solid fa-moon" style="color:#b7a6ff"></i>
+            <div class="sv" id="sunset">--:--</div>
+            <div class="sl">Δύση</div>
+          </div>
+        </div>
+        <div class="sun-meta" id="dayLen">—</div>
+      </div>
+      <div class="updated" id="updated"></div>
+    </section>
+
+    <!-- ================= FORECAST ================= -->
+    <section class="view" id="view-forecast">
+      <div class="card glass">
+        <div class="card-title"><i class="fa-solid fa-chart-line"></i>Πρόγνωση 5 ημερών</div>
+        <div class="seg">
+          <button class="on" data-mode="daily"><i class="fa-regular fa-calendar"></i>&nbsp; Ανά ημέρα</button>
+          <button data-mode="hourly"><i class="fa-regular fa-clock"></i>&nbsp; Ανά ώρα</button>
+        </div>
+        <div class="chart-scroll" id="chartScroll">
+          <div class="chart-inner" id="chartInner"><canvas id="chart"></canvas></div>
+        </div>
+        <div class="hint" id="chartHint">Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής</div>
+      </div>
+      <div class="card glass">
+        <div class="card-title"><i class="fa-solid fa-list"></i>Αναλυτικά</div>
+        <div id="dayList"></div>
+      </div>
+    </section>
+
+    <!-- ================= AIR ================= -->
+    <section class="view" id="view-air">
+      <div class="card glass">
+        <div class="card-title"><i class="fa-solid fa-lungs"></i>Ευρωπαϊκός δείκτης ποιότητας αέρα</div>
+        <div class="aqi-main">
+          <div class="ring">
+            <svg width="128" height="128" viewBox="0 0 128 128">
+              <circle cx="64" cy="64" r="54" fill="none" stroke="currentColor" stroke-opacity=".18" stroke-width="12"/>
+              <circle id="aqiRing" cx="64" cy="64" r="54" fill="none" stroke="#3ddc84" stroke-width="12" stroke-linecap="round" stroke-dasharray="339.3" stroke-dashoffset="339.3" style="transition:stroke-dashoffset 1.2s ease,stroke .6s"/>
+            </svg>
+            <div class="rv"><div><b id="aqiVal">--</b><small>EAQI</small></div></div>
+          </div>
+          <div class="aqi-text">
+            <h3 id="aqiLabel">—</h3>
+            <p id="aqiAdvice">—</p>
+          </div>
+        </div>
+        <div class="aqi-legend">
+          <span style="background:#3ddc84"></span><span style="background:#a3e048"></span><span style="background:#ffd23f"></span><span style="background:#ff9233"></span><span style="background:#ff4d4d"></span><span style="background:#b46bff"></span>
+        </div>
+        <div class="aqi-legend-l"><span>Καλή</span><span>Μέτρια</span><span>Εξαιρ. κακή</span></div>
+      </div>
+      <div class="section-label">Ρύποι (µg/m³)</div>
+      <div class="poll" id="pollGrid"></div>
+      <div class="updated" style="margin-top:14px">Πηγή: Open-Meteo Air Quality (CAMS)</div>
+    </section>
+
+    <!-- ================= SEARCH ================= -->
+    <section class="view" id="view-search">
+      <div class="search-box glass">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="q" type="search" placeholder="Αναζήτηση πόλης… π.χ. Θεσσαλονίκη" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+        <button id="qClear" aria-label="Καθαρισμός"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <button class="locate-wide glass" id="btnLocate2"><i class="fa-solid fa-location-crosshairs"></i>Χρήση της τρέχουσας τοποθεσίας μου</button>
+      <div class="section-label" id="resLabel">Πρόσφατες αναζητήσεις</div>
+      <div class="results glass" id="results"></div>
+    </section>
+  </main>
+
+  <nav class="bottom glass">
+    <button class="active" data-view="now"><i class="fa-solid fa-house"></i>Τώρα</button>
+    <button data-view="forecast"><i class="fa-solid fa-chart-line"></i>Πρόγνωση</button>
+    <button data-view="air"><i class="fa-solid fa-leaf"></i>Αέρας</button>
+    <button data-view="search"><i class="fa-solid fa-magnifying-glass"></i>Αναζήτηση</button>
+  </nav>
+</div>
+
+<div class="loader" id="loader"><div class="glass"><i class="fa-solid fa-circle-notch"></i></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================= Helpers ================= */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const r0 = v => (v == null || isNaN(v)) ? '--' : Math.round(v);
+const store = {
+  get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
+  set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
+};
+let toastTimer;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+}
+function loading(on){
+  $('#loader').classList.toggle('on', on);
+  $('#btnRefresh').classList.toggle('spin', on);
+}
+async function getJSON(url){
+  const res = await fetch(url);
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  return res.json();
+}
+const hhmm = iso => iso ? iso.slice(11, 16) : '--:--';
+const dayShort = iso => new Date(iso.slice(0,10) + 'T12:00:00').toLocaleDateString('el-GR', {weekday:'short'}).replace('.', '');
+const dayDate = iso => new Date(iso.slice(0,10) + 'T12:00:00').toLocaleDateString('el-GR', {day:'numeric', month:'short'});
+const flag = cc => cc && cc.length === 2 ? String.fromCodePoint(...cc.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0))) : '🌍';
+
+/* ================= WMO weather codes ================= */
+// code: [description, day icon, night icon, group]
+const WMO = {
+  0:['Καθαρός ουρανός','sun','moon','clear'],
+  1:['Κυρίως αίθριος','cloud-sun','cloud-moon','clear'],
+  2:['Μερική συννεφιά','cloud-sun','cloud-moon','cloudy'],
+  3:['Συννεφιά','cloud','cloud','cloudy'],
+  45:['Ομίχλη','smog','smog','fog'],
+  48:['Ομίχλη με πάχνη','smog','smog','fog'],
+  51:['Ελαφρύ ψιχάλισμα','cloud-rain','cloud-rain','rain'],
+  53:['Ψιχάλισμα','cloud-rain','cloud-rain','rain'],
+  55:['Πυκνό ψιχάλισμα','cloud-rain','cloud-rain','rain'],
+  56:['Παγωμένο ψιχάλισμα','icicles','icicles','rain'],
+  57:['Πυκνό παγωμένο ψιχάλισμα','icicles','icicles','rain'],
+  61:['Ασθενής βροχή','cloud-sun-rain','cloud-moon-rain','rain'],
+  63:['Βροχή','cloud-rain','cloud-rain','rain'],
+  65:['Ισχυρή βροχή','cloud-showers-heavy','cloud-showers-heavy','rain'],
+  66:['Παγωμένη βροχή','icicles','icicles','rain'],
+  67:['Ισχυρή παγωμένη βροχή','icicles','icicles','rain'],
+  71:['Ασθενής χιονόπτωση','snowflake','snowflake','snow'],
+  73:['Χιονόπτωση','snowflake','snowflake','snow'],
+  75:['Ισχυρή χιονόπτωση','snowflake','snowflake','snow'],
+  77:['Χιονόκοκκοι','snowflake','snowflake','snow'],
+  80:['Ασθενείς μπόρες','cloud-sun-rain','cloud-moon-rain','rain'],
+  81:['Μπόρες','cloud-showers-heavy','cloud-showers-heavy','rain'],
+  82:['Ισχυρές μπόρες','cloud-showers-water','cloud-showers-water','storm'],
+  85:['Χιονομπόρες','snowflake','snowflake','snow'],
+  86:['Ισχυρές χιονομπόρες','snowflake','snowflake','snow'],
+  95:['Καταιγίδα','cloud-bolt','cloud-bolt','storm'],
+  96:['Καταιγίδα με χαλάζι','cloud-bolt','cloud-bolt','storm'],
+  99:['Ισχυρή καταιγίδα με χαλάζι','cloud-bolt','cloud-bolt','storm']
+};
+const wmo = c => WMO[c] || ['Άγνωστο','cloud','cloud','cloudy'];
+const wIcon = (c, isDay) => 'fa-' + wmo(c)[isDay ? 1 : 2];
+
+/* ================= Dynamic themes ================= */
+// key: [gradient, isLightTheme, theme-color, glow]
+const THEMES = {
+  'clear-day':   ['linear-gradient(165deg,#1f7fe0 0%,#4fb0f2 45%,#9fd3f5 72%,#f7c86a 100%)', false, '#1f7fe0', 'rgba(255,214,110,.45)'],
+  'clear-night': ['linear-gradient(165deg,#070b22 0%,#1a1546 45%,#3a2470 80%,#5a3489 100%)', false, '#070b22', 'rgba(170,140,255,.22)'],
+  'cloudy-day':  ['linear-gradient(165deg,#9fb2c6 0%,#c7d3de 50%,#eef2f5 100%)', true, '#9fb2c6', 'rgba(255,255,255,.55)'],
+  'cloudy-night':['linear-gradient(165deg,#161b30 0%,#2c3352 55%,#4a4f70 100%)', false, '#161b30', 'rgba(160,170,220,.16)'],
+  'rain-day':    ['linear-gradient(165deg,#2f3d50 0%,#4b5d74 50%,#7488a0 100%)', false, '#2f3d50', 'rgba(150,190,255,.18)'],
+  'rain-night':  ['linear-gradient(165deg,#0b1220 0%,#1b2638 55%,#2c3b52 100%)', false, '#0b1220', 'rgba(120,160,230,.14)'],
+  'storm':       ['linear-gradient(165deg,#14141f 0%,#2e2a44 50%,#55466a 100%)', false, '#14141f', 'rgba(190,150,255,.2)'],
+  'snow-day':    ['linear-gradient(165deg,#c4d3e4 0%,#e6eef6 55%,#ffffff 100%)', true, '#c4d3e4', 'rgba(255,255,255,.7)'],
+  'snow-night':  ['linear-gradient(165deg,#18233b 0%,#34466a 55%,#64769a 100%)', false, '#18233b', 'rgba(200,220,255,.2)'],
+  'fog-day':     ['linear-gradient(165deg,#a3adb6 0%,#c9d0d6 55%,#e5e8eb 100%)', true, '#a3adb6', 'rgba(255,255,255,.6)'],
+  'fog-night':   ['linear-gradient(165deg,#1e232b 0%,#363d48 55%,#525a66 100%)', false, '#1e232b', 'rgba(200,200,220,.14)']
+};
+function themeKey(code, isDay){
+  const g = wmo(code)[3];
+  if(g === 'storm') return 'storm';
+  return g + (isDay ? '-day' : '-night');
+}
+let activeBg = 'A', currentTheme = null;
+function applyTheme(key){
+  if(key === currentTheme) return;
+  currentTheme = key;
+  const t = THEMES[key];
+  const next = activeBg === 'A' ? 'B' : 'A';
+  const nextEl = $('#bg' + next), curEl = $('#bg' + activeBg);
+  nextEl.style.background = t[0];
+  requestAnimationFrame(() => { nextEl.classList.add('on'); curEl.classList.remove('on'); });
+  activeBg = next;
+  document.body.classList.toggle('light', t[1]);
+  document.documentElement.style.setProperty('--glow', t[3]);
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', t[2]);
+  if(state.wx) setTimeout(renderChart, 50);
+}
+
+/* ================= Indices ================= */
+function uvInfo(u){
+  if(u < 3) return ['Χαμηλός', '#3ddc84', 'Δεν απαιτείται προστασία'];
+  if(u < 6) return ['Μέτριος', '#ffd23f', 'Γυαλιά ηλίου & αντηλιακό'];
+  if(u < 8) return ['Υψηλός', '#ff9233', 'Αποφύγετε τον ήλιο 12:00–16:00'];
+  if(u < 11) return ['Πολύ υψηλός', '#ff4d4d', 'Περιορίστε την έκθεση'];
+  return ['Ακραίος', '#b46bff', 'Μείνετε στη σκιά'];
+}
+const AQI_LEVELS = [
+  [20, 'Καλή', '#3ddc84', 'Η ποιότητα του αέρα είναι εξαιρετική. Ιδανικές συνθήκες για δραστηριότητες έξω.'],
+  [40, 'Ικανοποιητική', '#a3e048', 'Καλή ποιότητα αέρα. Απολαύστε κανονικά τις υπαίθριες δραστηριότητες.'],
+  [60, 'Μέτρια', '#ffd23f', 'Οι ευαίσθητες ομάδες καλό είναι να περιορίσουν την έντονη άσκηση έξω.'],
+  [80, 'Κακή', '#ff9233', 'Περιορίστε την παρατεταμένη ή έντονη δραστηριότητα σε εξωτερικούς χώρους.'],
+  [100, 'Πολύ κακή', '#ff4d4d', 'Αποφύγετε την έντονη δραστηριότητα έξω. Κλειστά παράθυρα.'],
+  [Infinity, 'Εξαιρετικά κακή', '#b46bff', 'Παραμείνετε σε εσωτερικούς χώρους όσο είναι δυνατόν.']
+];
+const aqiInfo = v => AQI_LEVELS.find(l => v <= l[0]);
+// EAQI band thresholds per pollutant (µg/m³)
+const POLLUTANTS = [
+  ['pm2_5', 'PM2.5', 'fa-braille', [10,20,25,50,75]],
+  ['pm10', 'PM10', 'fa-smog', [20,40,50,100,150]],
+  ['nitrogen_dioxide', 'NO₂', 'fa-car', [40,90,120,230,340]],
+  ['ozone', 'O₃', 'fa-sun-plant-wilt', [50,100,130,240,380]],
+  ['sulphur_dioxide', 'SO₂', 'fa-industry', [100,200,350,500,750]],
+  ['carbon_monoxide', 'CO', 'fa-fire', null]
+];
+const bandColor = (v, th) => {
+  if(!th || v == null) return 'rgba(255,255,255,.5)';
+  const i = th.findIndex(t => v <= t);
+  return AQI_LEVELS[i === -1 ? 5 : i][2];
+};
+const COMPASS = ['Β','ΒΑ','Α','ΝΑ','Ν','ΝΔ','Δ','ΒΔ'];
+const compass = d => COMPASS[Math.round(((d % 360) + 360) % 360 / 45) % 8];
+function beaufort(kmh){
+  const t = [1,6,12,20,29,39,50,62,75,89,103,118];
+  const i = t.findIndex(x => kmh < x);
+  return i === -1 ? 12 : i;
+}
+
+/* ================= State ================= */
+const DEFAULT_LOC = {lat:37.9838, lon:23.7275, name:'Αθήνα', sub:'Αττική, Ελλάδα', cc:'GR'};
+const state = {loc:null, wx:null, aq:null, mode:'daily', chart:null};
+
+/* ================= Data loading ================= */
+async function loadWeather(loc){
+  state.loc = loc;
+  store.set('wx_loc', loc);
+  $('#locName').textContent = loc.name;
+  loading(true);
+  const lat = loc.lat.toFixed(4), lon = loc.lon.toFixed(4);
+  const wxUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+    '&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,pressure_msl,dew_point_2m' +
+    '&hourly=temperature_2m,precipitation_probability,weather_code,is_day' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum' +
+    '&timezone=auto&forecast_days=5&wind_speed_unit=kmh';
+  const aqUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon +
+    '&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,carbon_monoxide&timezone=auto';
+  try{
+    const [wx, aq] = await Promise.all([getJSON(wxUrl), getJSON(aqUrl).catch(() => null)]);
+    state.wx = wx; state.aq = aq;
+    renderAll();
+  }catch(e){
+    console.error(e);
+    toast('Αδυναμία λήψης δεδομένων. Ελέγξτε τη σύνδεσή σας.');
+  }finally{
+    loading(false);
+  }
+}
+
+function locate(){
+  if(!('geolocation' in navigator)){ toast('Ο εντοπισμός δεν υποστηρίζεται σε αυτή τη συσκευή.'); return; }
+  $('#btnLocate').classList.add('spin');
+  navigator.geolocation.getCurrentPosition(pos => {
+    $('#btnLocate').classList.remove('spin');
+    const {latitude, longitude} = pos.coords;
+    loadWeather({lat:latitude, lon:longitude, name:'Η τοποθεσία μου', sub:'Τρέχουσα θέση', cc:null, gps:true});
+    switchView('now');
+  }, err => {
+    $('#btnLocate').classList.remove('spin');
+    toast(err.code === 1 ? 'Δεν δόθηκε άδεια εντοπισμού θέσης.' : 'Ο εντοπισμός απέτυχε. Δοκιμάστε την αναζήτηση.');
+  }, {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
+}
+
+/* ================= Rendering ================= */
+function renderAll(){
+  const wx = state.wx, c = wx.current, d = wx.daily;
+  const isDay = c.is_day === 1;
+  applyTheme(themeKey(c.weather_code, isDay));
+
+  // Header
+  const loc = state.loc;
+  $('#locName').textContent = loc.name;
+  const localTime = new Date().toLocaleString('el-GR', {timeZone:wx.timezone, weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
+  $('#locSub').textContent = (loc.sub ? loc.sub + ' · ' : '') + localTime;
+
+  // Hero
+  $('#heroIcon').className = 'fa-solid ' + wIcon(c.weather_code, isDay) + ' big-icon';
+  $('#temp').textContent = r0(c.temperature_2m);
+  $('#desc').textContent = wmo(c.weather_code)[0];
+  $('#feels').textContent = r0(c.apparent_temperature) + '°';
+  $('#tmax').textContent = r0(d.temperature_2m_max[0]) + '°';
+  $('#tmin').textContent = r0(d.temperature_2m_min[0]) + '°';
+
+  // Humidity
+  $('#hum').innerHTML = r0(c.relative_humidity_2m) + '<small>%</small>';
+  $('#humBar').style.width = Math.min(100, c.relative_humidity_2m || 0) + '%';
+  $('#humSub').textContent = 'Σημείο δρόσου ' + r0(c.dew_point_2m) + '°';
+
+  // Wind (direction = where wind comes FROM; arrow points where it blows TO)
+  $('#wind').innerHTML = r0(c.wind_speed_10m) + '<small>km/h</small>';
+  $('#windArrow').style.transform = 'rotate(' + ((c.wind_direction_10m + 180) - 45) + 'deg)';
+  $('#windSub').textContent = compass(c.wind_direction_10m) + ' · ' + beaufort(c.wind_speed_10m) + ' Bf · ριπές ' + r0(c.wind_gusts_10m);
+
+  // UV
+  const uvNow = c.uv_index != null ? c.uv_index : (d.uv_index_max[0] || 0);
+  const ui = uvInfo(uvNow);
+  $('#uv').innerHTML = (Math.round(uvNow * 10) / 10) + '<small>/ μέγ. ' + r0(d.uv_index_max[0]) + '</small>';
+  $('#uvDot').style.left = Math.min(100, uvNow / 11 * 100) + '%';
+  const ub = $('#uvBadge');
+  ub.textContent = ui[0]; ub.style.background = ui[1]; ub.title = ui[2];
+
+  // Elevation & pressure
+  $('#elev').innerHTML = r0(wx.elevation) + '<small>μ</small>';
+  $('#coords').textContent = Math.abs(wx.latitude).toFixed(2) + '°' + (wx.latitude >= 0 ? 'Β' : 'Ν') + ', ' + Math.abs(wx.longitude).toFixed(2) + '°' + (wx.longitude >= 0 ? 'Α' : 'Δ');
+  $('#press').innerHTML = r0(c.pressure_msl) + '<small>hPa</small>';
+  $('#pressSub').textContent = c.pressure_msl < 1009 ? 'Χαμηλή πίεση' : c.pressure_msl > 1022 ? 'Υψηλή πίεση' : 'Κανονική';
+
+  // Sun
+  const sr = d.sunrise[0], ss = d.sunset[0];
+  $('#sunrise').textContent = hhmm(sr);
+  $('#sunset').textContent = hhmm(ss);
+  const srT = new Date(sr).getTime(), ssT = new Date(ss).getTime(), nowT = new Date(c.time).getTime();
+  const lenMin = Math.round((ssT - srT) / 60000);
+  const f = Math.max(0, Math.min(1, (nowT - srT) / (ssT - srT)));
+  const th = Math.PI * (1 - f);
+  const x = 150 + 130 * Math.cos(th), y = 92 - 80 * Math.sin(th);
+  ['#sunDot', '#sunDotGlow'].forEach(s => { $(s).setAttribute('cx', x.toFixed(1)); $(s).setAttribute('cy', y.toFixed(1)); });
+  $('#sunDot').setAttribute('fill', isDay ? '#ffc94a' : '#9aa3c7');
+  let meta = 'Διάρκεια ημέρας ' + Math.floor(lenMin / 60) + ' ώ ' + (lenMin % 60) + ' λ';
+  if(isDay && nowT < ssT){ const left = Math.round((ssT - nowT) / 60000); meta += ' · απομένουν ' + Math.floor(left / 60) + ' ώ ' + (left % 60) + ' λ φωτός'; }
+  $('#dayLen').textContent = meta;
+
+  $('#updated').innerHTML = 'Ενημέρωση ' + hhmm(c.time) + ' (τοπική ώρα) · Δεδομένα <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>';
+
+  renderAir();
+  renderDays();
+  renderChart();
+}
+
+function renderAir(){
+  const aq = state.aq && state.aq.current;
+  if(!aq || aq.european_aqi == null){
+    $('#aqiMini').textContent = 'N/A';
+    $('#aqiMiniBadge').textContent = 'Μη διαθέσιμο'; $('#aqiMiniBadge').style.background = '#ccc';
+    $('#aqiVal').textContent = '--'; $('#aqiLabel').textContent = 'Μη διαθέσιμα δεδομένα';
+    $('#aqiAdvice').textContent = 'Δεν υπάρχουν δεδομένα ποιότητας αέρα για αυτή την περιοχή.';
+    $('#pollGrid').innerHTML = '';
+    return;
+  }
+  const v = Math.round(aq.european_aqi), info = aqiInfo(v);
+  $('#aqiMini').innerHTML = v + '<small>EAQI</small>';
+  const mb = $('#aqiMiniBadge'); mb.textContent = info[1]; mb.style.background = info[2];
+  $('#aqiVal').textContent = v;
+  $('#aqiLabel').textContent = info[1];
+  $('#aqiLabel').style.color = info[2];
+  $('#aqiAdvice').textContent = info[3];
+  const ring = $('#aqiRing'), C = 339.3;
+  ring.setAttribute('stroke', info[2]);
+  ring.style.strokeDashoffset = C - C * Math.min(1, v / 100);
+
+  $('#pollGrid').innerHTML = POLLUTANTS.map(p => {
+    const val = aq[p[0]];
+    const shown = val == null ? '--' : (p[0] === 'carbon_monoxide' ? Math.round(val) : (Math.round(val * 10) / 10));
+    return '<div class="tile glass"><div class="t-head"><i class="fa-solid ' + p[2] + '"></i>' + p[1] +
+      '<span class="dot" style="background:' + bandColor(val, p[3]) + '"></span></div>' +
+      '<div class="t-val">' + shown + '<small>µg/m³</small></div></div>';
+  }).join('');
+}
+
+function renderDays(){
+  const d = state.wx.daily;
+  const gMin = Math.min(...d.temperature_2m_min), gMax = Math.max(...d.temperature_2m_max);
+  const span = Math.max(1, gMax - gMin);
+  $('#dayList').innerHTML = d.time.map((t, i) => {
+    const lo = d.temperature_2m_min[i], hi = d.temperature_2m_max[i];
+    const left = (lo - gMin) / span * 100, width = (hi - lo) / span * 100;
+    const pp = d.precipitation_probability_max[i];
+    return '<div class="day">' +
+      '<div class="dn">' + (i === 0 ? 'Σήμερα' : esc(dayShort(t))) + '<small>' + esc(dayDate(t)) + '</small></div>' +
+      '<div class="di"><i class="fa-solid ' + wIcon(d.weather_code[i], true) + '" title="' + esc(wmo(d.weather_code[i])[0]) + '"></i></div>' +
+      '<div class="dp">' + (pp != null ? '<i class="fa-solid fa-droplet"></i> ' + pp + '%' : '') + '</div>' +
+      '<div class="range"><span class="lo">' + r0(lo) + '°</span><div class="track"><span style="left:' + left + '%;width:' + Math.max(width, 4) + '%"></span></div><span class="hi">' + r0(hi) + '°</span></div>' +
+      '</div>';
+  }).join('');
+}
+
+function renderChart(){
+  const wx = state.wx;
+  if(!wx || typeof Chart === 'undefined') return;
+  const cs = getComputedStyle(document.body);
+  const ink = cs.getPropertyValue('--ink').trim() || '#fff';
+  const soft = cs.getPropertyValue('--ink-soft').trim() || 'rgba(255,255,255,.7)';
+  const light = document.body.classList.contains('light');
+  const gridCol = light ? 'rgba(22,32,44,.08)' : 'rgba(255,255,255,.12)';
+  const barCol = light ? 'rgba(31,111,209,.28)' : 'rgba(140,190,255,.35)';
+  Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
+
+  const inner = $('#chartInner'), scroller = $('#chartScroll');
+  const fill = color => ctx => {
+    const ch = ctx.chart, a = ch.chartArea;
+    if(!a) return 'transparent';
+    const g = ch.ctx.createLinearGradient(0, a.top, 0, a.bottom);
+    g.addColorStop(0, color + '66'); g.addColorStop(1, color + '00');
+    return g;
+  };
+  let labels, datasets;
+
+  if(state.mode === 'daily'){
+    inner.style.width = '100%';
+    $('#chartHint').textContent = 'Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής ανά ημέρα';
+    const d = wx.daily;
+    labels = d.time.map((t, i) => i === 0 ? 'Σήμερα' : dayShort(t));
+    datasets = [
+      {type:'line', label:'Μέγιστη', data:d.temperature_2m_max, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#ffb547', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:1},
+      {type:'line', label:'Ελάχιστη', data:d.temperature_2m_min, borderColor:'#5fb8ff', backgroundColor:fill('#5fb8ff'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#5fb8ff', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:2},
+      {type:'bar', label:'Πιθ. βροχής', data:d.precipitation_probability_max, backgroundColor:barCol, borderRadius:8, barPercentage:.45, yAxisID:'y1', order:3}
+    ];
+  } else {
+    const h = wx.hourly, n = h.time.length;
+    inner.style.width = Math.max(n * 18, scroller.clientWidth) + 'px';
+    $('#chartHint').textContent = 'Σύρετε οριζόντια · θερμοκρασία και πιθανότητα βροχής ανά ώρα';
+    labels = h.time.map(t => { const hr = +t.slice(11, 13); return hr === 0 ? dayShort(t) : t.slice(11, 16); });
+    datasets = [
+      {type:'line', label:'Θερμοκρασία', data:h.temperature_2m, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.4, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, yAxisID:'y', order:1},
+      {type:'bar', label:'Πιθ. βροχής', data:h.precipitation_probability, backgroundColor:barCol, borderRadius:4, barPercentage:.8, categoryPercentage:.9, yAxisID:'y1', order:2}
+    ];
+  }
+
+  if(state.chart) state.chart.destroy();
+  state.chart = new Chart($('#chart').getContext('2d'), {
+    data:{labels, datasets},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      interaction:{mode:'index', intersect:false},
+      animation:{duration:900, easing:'easeOutQuart'},
+      layout:{padding:{top:4, right:2}},
+      plugins:{
+        legend:{labels:{usePointStyle:true, pointStyle:'circle', boxWidth:7, boxHeight:7, color:ink, padding:14, font:{size:11, weight:'600'}}},
+        tooltip:{backgroundColor:'rgba(15,20,35,.88)', titleColor:'#fff', bodyColor:'#fff', padding:10, cornerRadius:12, displayColors:true, boxPadding:4,
+          callbacks:{label:c => c.dataset.yAxisID === 'y1' ? ' ' + c.dataset.label + ': ' + (c.raw == null ? '--' : c.raw) + '%' : ' ' + c.dataset.label + ': ' + Math.round(c.raw) + '°C'}}
+      },
+      scales:{
+        x:{grid:{display:false}, border:{display:false}, ticks:{color:soft, maxRotation:0, autoSkip:true, maxTicksLimit:state.mode === 'daily' ? 5 : 40, font:{size:11, weight:'600'}}},
+        y:{grid:{color:gridCol}, border:{display:false}, grace:'10%', ticks:{color:soft, maxTicksLimit:6, callback:v => v + '°', font:{size:11}}},
+        y1:{position:'right', min:0, max:100, grid:{display:false}, border:{display:false}, ticks:{color:soft, stepSize:25, callback:v => v + '%', font:{size:10}}}
+      }
+    }
+  });
+}
+
+/* ================= Search (Open-Meteo Geocoding) ================= */
+let qTimer, qSeq = 0;
+function renderRecent(){
+  const rec = store.get('wx_recent', []);
+  $('#resLabel').textContent = 'Πρόσφατες αναζητήσεις';
+  if(!rec.length){
+    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-earth-europe"></i>Αναζητήστε οποιαδήποτε πόλη στον κόσμο,<br>στα ελληνικά ή στα αγγλικά.</div>';
+    return;
+  }
+  $('#results').innerHTML = rec.map((r, i) => resRow(r, 'rec', i)).join('');
+}
+function resRow(r, kind, i){
+  return '<div class="res" data-kind="' + kind + '" data-i="' + i + '">' +
+    '<div class="flag">' + flag(r.cc) + '</div>' +
+    '<div><div class="rn">' + esc(r.name) + '</div><div class="rs">' + esc(r.sub || '') + '</div></div>' +
+    '<i class="fa-solid fa-chevron-right chev"></i></div>';
+}
+let lastResults = [];
+async function doSearch(q){
+  const seq = ++qSeq;
+  if(q.length < 2){ renderRecent(); return; }
+  $('#resLabel').textContent = 'Αποτελέσματα';
+  $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i>Αναζήτηση…</div>';
+  try{
+    const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=el&format=json';
+    const data = await getJSON(url);
+    if(seq !== qSeq) return;
+    lastResults = (data.results || []).map(r => ({
+      lat:r.latitude, lon:r.longitude, name:r.name, cc:r.country_code,
+      sub:[r.admin1, r.country].filter(Boolean).join(', ') + (r.elevation != null ? ' · ' + Math.round(r.elevation) + ' μ' : '')
+    }));
+    $('#results').innerHTML = lastResults.length
+      ? lastResults.map((r, i) => resRow(r, 'res', i)).join('')
+      : '<div class="empty"><i class="fa-regular fa-face-frown"></i>Δεν βρέθηκαν αποτελέσματα για «' + esc(q) + '»</div>';
+  }catch(e){
+    if(seq !== qSeq) return;
+    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-wifi"></i>Σφάλμα σύνδεσης. Δοκιμάστε ξανά.</div>';
+  }
+}
+function pickLocation(r){
+  const rec = store.get('wx_recent', []).filter(x => !(Math.abs(x.lat - r.lat) < 1e-3 && Math.abs(x.lon - r.lon) < 1e-3));
+  rec.unshift(r); store.set('wx_recent', rec.slice(0, 6));
+  $('#q').value = ''; $('#qClear').style.display = 'none';
+  $('#q').blur();
+  renderRecent();
+  switchView('now');
+  loadWeather(r);
+}
+
+/* ================= Navigation ================= */
+function switchView(v){
+  $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + v));
+  $$('nav.bottom button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
+  $('#main').scrollTop = 0;
+  if(v === 'forecast') setTimeout(renderChart, 30);
+  if(v === 'search') setTimeout(() => $('#q').focus(), 250);
+}
+
+/* ================= PWA: generated icons & manifest ================= */
+function makeIcon(size){
+  const c = document.createElement('canvas'); c.width = c.height = size;
+  const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, size, size);
+  g.addColorStop(0, '#1f7fe0'); g.addColorStop(.6, '#4fb0f2'); g.addColorStop(1, '#f7c86a');
+  x.fillStyle = g; x.fillRect(0, 0, size, size);
+  const s = size / 100;
+  x.fillStyle = '#ffd24a'; x.shadowColor = 'rgba(255,200,60,.8)'; x.shadowBlur = 12 * s;
+  x.beginPath(); x.arc(40 * s, 40 * s, 18 * s, 0, Math.PI * 2); x.fill();
+  x.shadowBlur = 0; x.fillStyle = 'rgba(255,255,255,.95)';
+  x.beginPath();
+  x.arc(48 * s, 64 * s, 14 * s, 0, Math.PI * 2);
+  x.arc(64 * s, 56 * s, 18 * s, 0, Math.PI * 2);
+  x.arc(78 * s, 66 * s, 12 * s, 0, Math.PI * 2);
+  x.fill();
+  x.fillRect(48 * s, 62 * s, 30 * s, 16 * s);
+  return c.toDataURL('image/png');
+}
+function setupPWA(){
+  try{
+    const i180 = makeIcon(180), i192 = makeIcon(192), i512 = makeIcon(512);
+    $('#touchIcon').href = i180;
+    $('#favIcon').href = i192;
+    const base = location.href.split('#')[0];
+    const manifest = {
+      name:'Καιρός', short_name:'Καιρός', description:'Premium εφαρμογή καιρού',
+      start_url:base, scope:base.substring(0, base.lastIndexOf('/') + 1),
+      display:'standalone', orientation:'portrait',
+      background_color:'#1f7fe0', theme_color:'#1f7fe0', lang:'el',
+      icons:[{src:i192, sizes:'192x192', type:'image/png'}, {src:i512, sizes:'512x512', type:'image/png', purpose:'any maskable'}]
+    };
+    $('#manifestLink').href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
+  }catch(e){}
+}
+
+/* ================= Events ================= */
+$$('nav.bottom button').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
+$('#btnLocate').addEventListener('click', locate);
+$('#btnLocate2').addEventListener('click', locate);
+$('#btnRefresh').addEventListener('click', () => state.loc && loadWeather(state.loc));
+$('#aqiTile').addEventListener('click', () => switchView('air'));
+$$('.seg button').forEach(b => b.addEventListener('click', () => {
+  $$('.seg button').forEach(x => x.classList.toggle('on', x === b));
+  state.mode = b.dataset.mode;
+  $('#chartScroll').scrollLeft = 0;
+  renderChart();
+}));
+$('#q').addEventListener('input', e => {
+  const v = e.target.value.trim();
+  $('#qClear').style.display = v ? 'block' : 'none';
+  clearTimeout(qTimer); qTimer = setTimeout(() => doSearch(v), 350);
+});
+$('#q').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){ clearTimeout(qTimer); doSearch(e.target.value.trim()); }
+});
+$('#qClear').addEventListener('click', () => { $('#q').value = ''; $('#qClear').style.display = 'none'; renderRecent(); $('#q').focus(); });
+$('#results').addEventListener('click', e => {
+  const row = e.target.closest('.res'); if(!row) return;
+  const list = row.dataset.kind === 'rec' ? store.get('wx_recent', []) : lastResults;
+  const r = list[+row.dataset.i]; if(r) pickLocation(r);
+});
+// Refresh when returning to the app after a while
+let hiddenAt = 0;
+document.addEventListener('visibilitychange', () => {
+  if(document.hidden) hiddenAt = Date.now();
+  else if(state.loc && Date.now() - hiddenAt > 10 * 60 * 1000) loadWeather(state.loc);
+});
+let resizeT;
+window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => state.wx && renderChart(), 200); });
+
+/* ================= Init ================= */
+setupPWA();
+applyTheme('clear-day');
+renderRecent();
+const saved = store.get('wx_loc', null);
+if(saved && saved.lat != null){
+  loadWeather(saved);
+} else {
+  loadWeather(DEFAULT_LOC);
+  if('geolocation' in navigator){
+    navigator.geolocation.getCurrentPosition(pos => {
+      loadWeather({lat:pos.coords.latitude, lon:pos.coords.longitude, name:'Η τοποθεσία μου', sub:'Τρέχουσα θέση', cc:null, gps:true});
+    }, () => {}, {timeout:10000, maximumAge:600000});
+  }
+}
+})();
+</script>
+</body>
+</html>
