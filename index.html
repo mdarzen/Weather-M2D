@@ -53,6 +53,7 @@ button{font-family:inherit;cursor:pointer}
 /* ---------- Dynamic background ---------- */
 .bg{position:fixed;inset:0;z-index:-4;opacity:0;transition:opacity 1.4s ease}
 .bg.on{opacity:1}
+body.scrub .bg{transition:opacity .45s ease}
 .glow{position:fixed;inset:-25%;z-index:-3;pointer-events:none;
   background:radial-gradient(circle at 28% 18%,var(--glow),transparent 42%),
              radial-gradient(circle at 80% 85%,rgba(255,255,255,.08),transparent 40%);
@@ -93,6 +94,32 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h)
 .hero .desc{font-size:1.15rem;font-weight:500;margin-top:6px}
 .hero .hl{font-size:.9rem;color:var(--ink-soft);margin-top:8px}
 .hero .hl b{color:var(--ink);font-weight:600}
+
+/* ---------- Time machine & share ---------- */
+.tm{margin:16px auto 0;max-width:420px;border-radius:20px;padding:12px 16px 10px;text-align:left}
+.tm-head{display:flex;align-items:center;justify-content:space-between;min-height:28px}
+.tm-head span{font-weight:700;font-size:.9rem}
+.tm-head button{border:0;border-radius:12px;padding:5px 10px;font-size:.75rem;font-weight:700;background:var(--glass-b);color:var(--ink);display:flex;gap:6px;align-items:center}
+.tm input{-webkit-appearance:none;appearance:none;width:100%;height:30px;background:transparent;margin-top:4px}
+.tm input::-webkit-slider-runnable-track{height:8px;border-radius:8px;background:var(--track,linear-gradient(90deg,#6ec6ff,#ffd23f))}
+.tm input::-moz-range-track{height:8px;border-radius:8px;background:var(--track,linear-gradient(90deg,#6ec6ff,#ffd23f))}
+.tm input::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:#fff;border:3px solid rgba(0,0,0,.18);box-shadow:0 2px 10px rgba(0,0,0,.3);margin-top:-9px}
+.tm input::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:#fff;border:3px solid rgba(0,0,0,.18)}
+.tm-scale{display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-soft);font-weight:600}
+.hero.future .temp,.hero.future .desc{opacity:.92}
+.hero.future .big-icon{animation-duration:2.5s}
+.share-btn{margin:12px auto 0;border-radius:16px;padding:9px 16px;color:var(--ink);font-weight:600;font-size:.85rem;display:inline-flex;align-items:center;gap:8px}
+.share-btn.spin i{animation:spin 1s linear infinite}
+#skyMoon{position:fixed;width:46px;height:46px;z-index:-2;pointer-events:none;opacity:0;transform:translate(-50%,0);transition:opacity 1.2s ease,left 1s ease,top 1s ease;filter:drop-shadow(0 0 18px rgba(255,250,220,.55))}
+#skyMoon.on{opacity:.95}
+#skyMoon svg{width:100%;height:100%}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(5,8,18,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px calc(16px + env(safe-area-inset-right)) calc(20px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left))}
+.sheet-card{width:100%;max-width:420px;text-align:center}
+.sheet-card img{width:100%;max-height:62vh;object-fit:contain;border-radius:20px;box-shadow:0 20px 50px rgba(0,0,0,.45);-webkit-touch-callout:default;user-select:auto;-webkit-user-select:auto}
+.sheet-btns{display:flex;gap:10px;margin-top:16px}
+.sheet-btns button{flex:1;border:0;border-radius:16px;padding:14px;font-weight:700;font-size:.95rem;background:rgba(255,255,255,.16);color:#fff}
+.sheet-btns .primary{background:#3a8dff}
+.sheet-hint{color:rgba(255,255,255,.75);font-size:.75rem;margin-top:12px}
 
 /* ---------- 24h strip ---------- */
 .strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -4px;padding:0 4px 2px;-webkit-overflow-scrolling:touch}
@@ -298,6 +325,7 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
 <div class="bg" id="bgB"></div>
 <div class="glow"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
+<div id="skyMoon" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="40" fill="rgba(255,255,255,.10)"/><path id="skyMoonLit" fill="#f6f2e4"/></svg></div>
 <div class="flash" id="flash"></div>
 
 <div id="app">
@@ -319,6 +347,12 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         <div class="desc" id="desc">—</div>
         <div class="hl"><span data-i18n="feels"></span> <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
         <div class="chip hidden" id="normChip"></div>
+        <div class="tm glass">
+          <div class="tm-head"><span id="tmLabel"></span><button class="hidden" id="tmReset"><i class="fa-solid fa-rotate-left"></i><span data-i18n="tmBack"></span></button></div>
+          <input type="range" id="tm" min="0" max="24" value="0" step="1" aria-label="time">
+          <div class="tm-scale"><span data-i18n="tmNow"></span><span data-i18n="tmPlus12"></span><span data-i18n="tmPlus24"></span></div>
+        </div>
+        <button class="share-btn glass" id="shareBtn"><i class="fa-solid fa-arrow-up-from-bracket"></i><span data-i18n="share"></span></button>
       </div>
 
       <div id="alerts"></div>
@@ -545,6 +579,16 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
 
 <div class="loader" id="loader"><div class="glass"><i class="fa-solid fa-circle-notch"></i></div></div>
 <div class="toast" id="toast"></div>
+<div class="sheet hidden" id="shareSheet">
+  <div class="sheet-card">
+    <img id="shareImg" alt="">
+    <div class="sheet-btns">
+      <button class="primary" id="shareGo"><i class="fa-solid fa-arrow-up-from-bracket"></i> <span data-i18n="share"></span></button>
+      <button id="shareClose" data-i18n="close"></button>
+    </div>
+    <p class="sheet-hint" data-i18n="shareHint"></p>
+  </div>
+</div>
 
 <script>
 (function(){
@@ -664,7 +708,9 @@ const I18N = {
     alSnow:'Χιονόπτωση', alUV:'Πολύ υψηλή υπεριώδης ακτινοβολία', alFog:'Ομίχλη', alQuake:'Σεισμός {m} Ρίχτερ κοντά σας',
     alUpTo:'Έως {v}°', alWindD:'Ριπές έως {v} km/h', alRainD:'Έως {v} mm σε μία ώρα', alSnowD:'Έως {v} cm', alUVD:'Δείκτης UV έως {v}',
     alQuakeD:'{km} km μακριά · {ago}', alWhen:'{day} {from}–{to}',
-    alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alLink:'ΕΜΥ', tomorrow:'Αύριο'
+    alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alLink:'ΕΜΥ', tomorrow:'Αύριο',
+    tmNow:'Τώρα', tmBack:'Τώρα', tmHint:'Σύρετε για να δείτε τις επόμενες 24 ώρες', tmPlus12:'+12 ώρες', tmPlus24:'+24 ώρες',
+    share:'Κοινοποίηση', shareTitle:'Ο καιρός σήμερα', shareHint:'Μπορείτε επίσης να πατήσετε παρατεταμένα την εικόνα για να την αποθηκεύσετε.', close:'Κλείσιμο'
   },
   en: {
     locale:'en-GB', appName:'Weather',
@@ -734,7 +780,9 @@ const I18N = {
     alSnow:'Snowfall', alUV:'Very high UV radiation', alFog:'Fog', alQuake:'M{m} earthquake near you',
     alUpTo:'Up to {v}°', alWindD:'Gusts up to {v} km/h', alRainD:'Up to {v} mm in an hour', alSnowD:'Up to {v} cm', alUVD:'UV index up to {v}',
     alQuakeD:'{km} km away · {ago}', alWhen:'{day} {from}–{to}',
-    alNote:'Automatic estimate from the forecast. Official warnings:', alLink:'HNMS (EMY)', tomorrow:'Tomorrow'
+    alNote:'Automatic estimate from the forecast. Official warnings:', alLink:'HNMS (EMY)', tomorrow:'Tomorrow',
+    tmNow:'Now', tmBack:'Now', tmHint:'Slide to see the next 24 hours', tmPlus12:'+12 h', tmPlus24:'+24 h',
+    share:'Share', shareTitle:"Today's weather", shareHint:'You can also press and hold the image to save it.', close:'Close'
   }
 };
 let lang = store.get('wx_lang', 'el');
@@ -810,7 +858,11 @@ const THEMES = {
   'snow-day':    ['linear-gradient(165deg,#b8c8db 0%,#dbe5f0 55%,#f4f7fb 100%)', true, '#b8c8db', 'rgba(255,255,255,.7)'],
   'snow-night':  ['linear-gradient(165deg,#18233b 0%,#34466a 55%,#64769a 100%)', false, '#18233b', 'rgba(200,220,255,.2)'],
   'fog-day':     ['linear-gradient(165deg,#a3adb6 0%,#c9d0d6 55%,#e5e8eb 100%)', true, '#a3adb6', 'rgba(255,255,255,.6)'],
-  'fog-night':   ['linear-gradient(165deg,#1e232b 0%,#363d48 55%,#525a66 100%)', false, '#1e232b', 'rgba(200,200,220,.14)']
+  'fog-night':   ['linear-gradient(165deg,#1e232b 0%,#363d48 55%,#525a66 100%)', false, '#1e232b', 'rgba(200,200,220,.14)'],
+  'golden':      ['linear-gradient(165deg,#2c6cb6 0%,#6c9dcf 40%,#e9b071 78%,#f99a5b 100%)', false, '#2c6cb6', 'rgba(255,190,110,.5)'],
+  'dawn':        ['linear-gradient(165deg,#25295c 0%,#6d4c8e 38%,#e2879a 72%,#ffc58e 100%)', false, '#25295c', 'rgba(255,170,170,.35)'],
+  'dusk':        ['linear-gradient(165deg,#181c46 0%,#553a7c 42%,#c45c7a 76%,#f4985f 100%)', false, '#181c46', 'rgba(255,140,110,.35)'],
+  'blue-hour':   ['linear-gradient(165deg,#0b1438 0%,#1d3474 55%,#4a5a9e 100%)', false, '#0b1438', 'rgba(140,160,255,.2)']
 };
 function themeKey(code, isDay){
   const g = wmo(code)[4];
@@ -866,7 +918,7 @@ const SEA_COLORS = ['#3ddc84','#a3e048','#ffd23f','#ff9233','#ff4d4d'];
    State & location
    ===================================================================== */
 const DEFAULT_LOC = {lat:37.9838, lon:23.7275, def:true, cc:'GR'};
-const state = {loc:null, wx:null, aq:null, sea:null, mode:'daily', chart:null, view:'now', reqId:0, conf:null, normals:null, quakes:null, quakesFailed:false};
+const state = {loc:null, wx:null, aq:null, sea:null, mode:'daily', chart:null, view:'now', reqId:0, conf:null, normals:null, quakes:null, quakesFailed:false, tm:0};
 const gpsName = loc => loc.names && (loc.names[lang] || loc.names.el || loc.names.en);
 function locName(loc){
   if(loc.def) return t('athens');
@@ -910,7 +962,7 @@ async function loadWeather(loc){
     if(myReq !== state.reqId) return;          // a newer request superseded this one
     if(!wx || !wx.current || !wx.daily) throw new Error('bad payload');
     const sameLoc = state.wx && state.wxLoc && Math.abs(state.wxLoc.lat - loc.lat) < 1e-3 && Math.abs(state.wxLoc.lon - loc.lon) < 1e-3;
-    if(!sameLoc){ state.conf = null; state.normals = null; state.quakes = null; state.quakesFailed = false; }
+    if(!sameLoc){ state.tm = 0; state.conf = null; state.normals = null; state.quakes = null; state.quakesFailed = false; }
     state.wx = wx; state.aq = aq; state.sea = sea; state.wxLoc = {lat:loc.lat, lon:loc.lon};
     renderAll();
     loadExtras(loc, myReq);
@@ -985,18 +1037,9 @@ function renderHeader(){
 
 function renderAll(){
   const wx = state.wx, c = wx.current, d = wx.daily;
-  const isDay = c.is_day === 1;
-  applyTheme(themeKey(c.weather_code, isDay));
-  fxSet(c.weather_code, isDay);
   renderHeader();
-
-  // Hero
-  $('#heroIcon').className = 'fa-solid ' + wIcon(c.weather_code, isDay) + ' big-icon';
-  $('#temp').textContent = r0(c.temperature_2m);
-  $('#desc').textContent = wDesc(c.weather_code);
-  $('#feels').textContent = r0(c.apparent_temperature) + '°';
-  $('#tmax').textContent = r0(d.temperature_2m_max[0]) + '°';
-  $('#tmin').textContent = r0(d.temperature_2m_min[0]) + '°';
+  renderTimeTrack();
+  renderHero();
 
   renderStrip();
   renderRain();
@@ -1731,6 +1774,201 @@ function renderExtras(){
 }
 
 /* =====================================================================
+   Live sky (sun position) & time machine
+   ===================================================================== */
+function sunAltitudeDeg(ms, lat, lon){
+  const d = toDays(ms), c = sunCoords(d), phi = RAD * lat;
+  const H = RAD * (280.16 + 360.9856235 * d) + RAD * lon - c.ra;
+  return Math.asin(Math.sin(phi) * Math.sin(c.dec) + Math.cos(phi) * Math.cos(c.dec) * Math.cos(H)) / RAD;
+}
+function moonAltAz(ms, lat, lon){
+  const d = toDays(ms), c = moonCoords(d), phi = RAD * lat;
+  const H = RAD * (280.16 + 360.9856235 * d) + RAD * lon - c.ra;
+  const alt = Math.asin(Math.sin(phi) * Math.sin(c.dec) + Math.cos(phi) * Math.cos(c.dec) * Math.cos(H));
+  const az = Math.atan2(Math.sin(H), Math.cos(H) * Math.sin(phi) - Math.tan(c.dec) * Math.cos(phi));   // 0 = south, + = west
+  return {alt, az};
+}
+// local wall-clock ISO string of the place -> epoch ms
+function placeIsoToMs(iso){
+  const p = iso.split(/[-T:]/).map(Number);
+  return Date.UTC(p[0], p[1] - 1, p[2], p[3] || 0, p[4] || 0) - (state.wx.utc_offset_seconds || 0) * 1000;
+}
+// returns {key, day}: weather themes for clouds/rain/etc., sun-driven skies for clear weather
+function skyFor(code, ms){
+  const wx = state.wx, lat = wx.latitude, lon = wx.longitude;
+  const alt = sunAltitudeDeg(ms, lat, lon);
+  const rising = sunAltitudeDeg(ms + 20 * 60000, lat, lon) > alt;
+  const g = wmo(code)[4];
+  const day = alt > -0.8;
+  if(g !== 'clear') return {key:themeKey(code, alt > -4), day, alt};
+  let key;
+  if(alt >= 12) key = 'clear-day';
+  else if(alt >= 4) key = 'golden';
+  else if(alt >= -4) key = rising ? 'dawn' : 'dusk';
+  else if(alt >= -10) key = 'blue-hour';
+  else key = 'clear-night';
+  return {key, day, alt};
+}
+function renderSkyMoon(ms, skyKey){
+  const el = $('#skyMoon'), wx = state.wx;
+  const show = ['clear-night', 'blue-hour', 'dusk', 'dawn'].includes(skyKey);
+  const mp = show ? moonAltAz(ms, wx.latitude, wx.longitude) : null;
+  if(!mp || mp.alt <= 0.03){ el.classList.remove('on'); return; }
+  const mi = moonInfo(ms);
+  if(mi.fraction < 0.03){ el.classList.remove('on'); return; }
+  $('#skyMoonLit').setAttribute('d', moonPath(mi.phase, 40, 50, 50));
+  $('#skyMoonLit').setAttribute('transform', wx.latitude < 0 ? 'translate(100,0) scale(-1,1)' : '');
+  // facing south: east on the left, west on the right; higher in the sky = nearer the top
+  const az = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, mp.az));
+  // kept in the side margins so it never sits behind the temperature
+  const f = Math.abs(az) / (Math.PI / 2);
+  const x = az < 0 ? 26 - f * 16 : 74 + f * 16;
+  const y = 11 + (1 - Math.min(1, mp.alt / (Math.PI / 2.4))) * 17;
+  el.style.left = x.toFixed(1) + '%';
+  el.style.top = y.toFixed(1) + '%';
+  el.classList.add('on');
+}
+function tempColor(v){
+  const stops = [[-5,[90,140,255]],[5,[110,198,255]],[15,[120,220,170]],[22,[255,210,63]],[30,[255,146,51]],[38,[255,77,77]]];
+  if(v <= stops[0][0]) return 'rgb(' + stops[0][1] + ')';
+  for(let i = 1; i < stops.length; i++){
+    if(v <= stops[i][0]){
+      const a = stops[i - 1], b = stops[i], f = (v - a[0]) / (b[0] - a[0]);
+      return 'rgb(' + a[1].map((x, k) => Math.round(x + (b[1][k] - x) * f)).join(',') + ')';
+    }
+  }
+  return 'rgb(' + stops[stops.length - 1][1] + ')';
+}
+function renderTimeTrack(){
+  const s = nowIdx(), h = state.wx.hourly, n = Math.min(24, h.time.length - 1 - s);
+  const el = $('#tm');
+  el.max = Math.max(0, n);
+  if(state.tm > n) state.tm = n;
+  el.value = state.tm;
+  const cols = [];
+  for(let o = 0; o <= n; o += 3) cols.push(tempColor(H('temperature_2m', s + o) ?? 15) + ' ' + Math.round(o / n * 100) + '%');
+  el.style.setProperty('--track', 'linear-gradient(90deg,' + cols.join(',') + ')');
+}
+function renderHero(){
+  const wx = state.wx, c = wx.current, d = wx.daily, h = wx.hourly, s = nowIdx(), o = state.tm || 0;
+  let code, temp, feels, ms, iso;
+  if(o === 0){ code = c.weather_code; temp = c.temperature_2m; feels = c.apparent_temperature; ms = Date.now(); iso = c.time; }
+  else{
+    const i = Math.min(s + o, h.time.length - 1);
+    code = H('weather_code', i); temp = H('temperature_2m', i); feels = H('apparent_temperature', i);
+    iso = h.time[i]; ms = placeIsoToMs(iso);
+  }
+  const sky = skyFor(code, ms);
+  applyTheme(sky.key);
+  fxSet(code, sky.day);
+  renderSkyMoon(ms, sky.key);
+  $('#heroIcon').className = 'fa-solid ' + wIcon(code, sky.day) + ' big-icon';
+  $('#temp').textContent = r0(temp);
+  $('#desc').textContent = wDesc(code);
+  $('#feels').textContent = r0(feels) + '°';
+  const di = Math.max(0, d.time.indexOf(iso.slice(0, 10)));
+  $('#tmax').textContent = r0(d.temperature_2m_max[di]) + '°';
+  $('#tmin').textContent = r0(d.temperature_2m_min[di]) + '°';
+  $('#tmLabel').textContent = o === 0 ? t('tmNow') : dayLabel(iso) + ' ' + hLabel(iso);
+  $('#tmReset').classList.toggle('hidden', o === 0);
+  $('.hero').classList.toggle('future', o > 0);
+}
+
+/* =====================================================================
+   Share card (canvas image -> iOS share sheet)
+   ===================================================================== */
+function wrapLines(ctx, text, maxW){
+  const words = String(text).split(' '), lines = [];
+  let line = '';
+  words.forEach(w => {
+    const test = line ? line + ' ' + w : w;
+    if(ctx.measureText(test).width > maxW && line){ lines.push(line); line = w; } else line = test;
+  });
+  if(line) lines.push(line);
+  return lines;
+}
+async function makeShareCard(){
+  const wx = state.wx, c = wx.current, d = wx.daily;
+  const W = 1080, Hh = 1350, cv = document.createElement('canvas');
+  cv.width = W; cv.height = Hh;
+  const x = cv.getContext('2d');
+  try{ await Promise.all([document.fonts.load('900 200px "Font Awesome 6 Free"'), document.fonts.load('200 100px Inter'), document.fonts.load('700 60px Inter')]); }catch(e){}
+  const th = THEMES[currentTheme] || THEMES['clear-day'];
+  const light = th[1], ink = light ? '#16202c' : '#ffffff', soft = light ? 'rgba(22,32,44,.68)' : 'rgba(255,255,255,.78)';
+  // background from the current sky's gradient colours
+  const cols = (th[0].match(/#[0-9a-fA-F]{6}/g) || ['#1f7fe0', '#9fd3f5']);
+  const g = x.createLinearGradient(0, 0, W * 0.45, Hh);
+  cols.forEach((col, i) => g.addColorStop(i / (cols.length - 1), col));
+  x.fillStyle = g; x.fillRect(0, 0, W, Hh);
+  const glow = x.createRadialGradient(W * 0.3, Hh * 0.18, 0, W * 0.3, Hh * 0.18, W * 0.7);
+  glow.addColorStop(0, th[3]); glow.addColorStop(1, 'rgba(255,255,255,0)');
+  x.fillStyle = glow; x.fillRect(0, 0, W, Hh);
+  const F = (w, s) => w + ' ' + s + 'px Inter, -apple-system, "Helvetica Neue", Arial, sans-serif';
+  x.textBaseline = 'alphabetic'; x.fillStyle = ink;
+  // header
+  x.font = F(700, 64); x.textAlign = 'left';
+  x.fillText(locName(state.loc), 80, 140);
+  x.font = F(500, 34); x.fillStyle = soft;
+  let dateTxt = '';
+  try{ dateTxt = new Date().toLocaleDateString(t('locale'), {weekday:'long', day:'numeric', month:'long', timeZone:wx.timezone}); }catch(e){}
+  x.fillText(dateTxt, 80, 195);
+  // icon
+  const isDay = sunAltitudeDeg(Date.now(), wx.latitude, wx.longitude) > -0.8;
+  const tmp = document.createElement('i'); tmp.className = 'fa-solid ' + wIcon(c.weather_code, isDay);
+  tmp.style.position = 'absolute'; tmp.style.left = '-9999px'; document.body.appendChild(tmp);
+  const glyph = getComputedStyle(tmp, '::before').content.replace(/["']/g, '');
+  tmp.remove();
+  x.textAlign = 'center'; x.fillStyle = ink;
+  if(glyph && glyph !== 'none'){ x.font = '900 210px "Font Awesome 6 Free"'; x.fillText(glyph, W / 2, 470); }
+  // temperature
+  x.font = F(200, 250); x.fillText(r0(c.temperature_2m) + '°', W / 2 + 20, 740);
+  x.font = F(600, 56); x.fillText(wDesc(c.weather_code), W / 2, 830);
+  x.font = F(500, 36); x.fillStyle = soft;
+  x.fillText(t('feels') + ' ' + r0(c.apparent_temperature) + '°  ·  ↑ ' + r0(d.temperature_2m_max[0]) + '°   ↓ ' + r0(d.temperature_2m_min[0]) + '°', W / 2, 890);
+  // summary panel
+  const items = buildSummary().map(z => z[1]).slice(0, 4);
+  x.font = F(500, 34);
+  let lines = [];
+  items.forEach(it => { wrapLines(x, it, W - 220).forEach((l, k) => lines.push((k === 0 ? '•  ' : '    ') + l)); });
+  lines = lines.slice(0, 6);
+  const top = 950, ph = 60 + lines.length * 48;
+  x.fillStyle = light ? 'rgba(255,255,255,.45)' : 'rgba(255,255,255,.14)';
+  x.beginPath(); (x.roundRect ? x.roundRect(60, top, W - 120, ph, 36) : x.rect(60, top, W - 120, ph)); x.fill();
+  x.fillStyle = ink; x.textAlign = 'left';
+  lines.forEach((l, i) => x.fillText(l, 100, top + 62 + i * 48));
+  // stats + footer
+  const aq = state.aq && state.aq.current && num(state.aq.current.european_aqi) ? Math.round(state.aq.current.european_aqi) : null;
+  const stats = [t('humidity') + ' ' + r0(c.relative_humidity_2m) + '%', t('wind') + ' ' + r0(c.wind_speed_10m) + ' km/h ' + compass(c.wind_direction_10m || 0), 'UV ' + r0(c.uv_index)];
+  if(aq !== null) stats.push('AQI ' + aq);
+  x.font = F(600, 32); x.fillStyle = soft; x.textAlign = 'center';
+  x.fillText(stats.join('   ·   '), W / 2, Math.min(Hh - 110, top + ph + 70));
+  x.font = F(600, 28); x.fillText(t('appName') + ' · Open-Meteo', W / 2, Hh - 50);
+  return new Promise(res => cv.toBlob(b => res(b), 'image/jpeg', 0.92));
+}
+const share = {blob:null, url:null};
+async function openShare(){
+  const btn = $('#shareBtn'); btn.classList.add('spin');
+  try{
+    const blob = await makeShareCard();
+    if(!blob) throw new Error('no image');
+    if(share.url) URL.revokeObjectURL(share.url);
+    share.blob = blob; share.url = URL.createObjectURL(blob);
+    $('#shareImg').src = share.url;
+    $('#shareSheet').classList.remove('hidden');
+  }catch(e){ console.error(e); toast(t('fetchErr')); }
+  finally{ btn.classList.remove('spin'); }
+}
+async function doShare(){
+  if(!share.blob) return;
+  const name = (t('appName') + '-' + new Date().toISOString().slice(0, 10)).replace(/\s+/g, '-') + '.jpg';
+  const file = new File([share.blob], name, {type:'image/jpeg'});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:t('shareTitle')}); return; }
+  }catch(e){ if(e && e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = share.url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+}
+
+/* =====================================================================
    Live effects (canvas)
    ===================================================================== */
 const fx = {
@@ -2011,6 +2249,17 @@ $('#btnRefresh').addEventListener('click', () => {
   if(state.loc) loadWeather(state.loc);
 });
 $('#aqiTile').addEventListener('click', () => switchView('air'));
+let scrubT;
+$('#tm').addEventListener('input', e => {
+  state.tm = +e.target.value;
+  document.body.classList.add('scrub'); clearTimeout(scrubT); scrubT = setTimeout(() => document.body.classList.remove('scrub'), 600);
+  if(state.wx) renderHero();
+});
+$('#tmReset').addEventListener('click', () => { state.tm = 0; $('#tm').value = 0; if(state.wx) renderHero(); });
+$('#shareBtn').addEventListener('click', () => { if(state.wx) openShare(); });
+$('#shareGo').addEventListener('click', doShare);
+$('#shareClose').addEventListener('click', () => $('#shareSheet').classList.add('hidden'));
+$('#shareSheet').addEventListener('click', e => { if(e.target.id === 'shareSheet') $('#shareSheet').classList.add('hidden'); });
 $('#layers').addEventListener('click', e => {
   const b = e.target.closest('button[data-layer]'); if(!b) return;
   map.layer = b.dataset.layer; store.set('wx_layer', map.layer);
@@ -2036,6 +2285,7 @@ $('#results').addEventListener('click', e => {
   const list = row.dataset.kind === 'rec' ? store.get('wx_recent', []) : lastResults;
   const r = list[+row.dataset.i]; if(r) pickLocation(r);
 });
+setInterval(() => { if(state.wx && !document.hidden && !state.tm) renderHero(); }, 5 * 60 * 1000);
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if(document.hidden){ hiddenAt = Date.now(); fxStop(false); return; }
@@ -2080,7 +2330,7 @@ if(saved && num(saved.lat) && num(saved.lon)){
   }
 }
 // Test hook (harmless in production)
-window.__wx = {state, fx, setLang, switchView, renderAll, t, moonInfo, moonTimes};
+window.__wx = {state, fx, setLang, switchView, renderAll, renderHero, t, moonInfo, moonTimes, sunAltitudeDeg, makeShareCard, get theme(){ return currentTheme; }};
 })();
 </script>
 </body>
