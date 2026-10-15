@@ -121,6 +121,13 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h)
 .sheet-btns .primary{background:#3a8dff}
 .sheet-hint{color:rgba(255,255,255,.75);font-size:.75rem;margin-top:12px}
 
+.trip{margin:12px auto 0;max-width:420px;border-radius:18px;padding:10px 12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px 12px;background:var(--glass);border:1px solid var(--glass-b)}
+.trip-main{font-weight:700;font-size:.92rem;display:flex;align-items:center;gap:8px}
+.trip-go{font-size:.8rem;font-weight:700;color:var(--ink);text-decoration:none;background:var(--glass-b);border-radius:12px;padding:6px 10px;display:flex;gap:6px;align-items:center}
+.trip-attr{flex-basis:100%;font-size:.62rem;color:var(--ink-soft)}
+.trip-attr a{color:inherit}
+.trip-calc{border:0;background:none;color:var(--ink);font-weight:700;font-size:.88rem;display:flex;gap:8px;align-items:center;padding:2px 4px}
+
 /* ---------- 24h strip ---------- */
 .strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -4px;padding:0 4px 2px;-webkit-overflow-scrolling:touch}
 .strip::-webkit-scrollbar{display:none}
@@ -346,6 +353,7 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         <div class="temp"><span id="temp">--</span><sup>°C</sup></div>
         <div class="desc" id="desc">—</div>
         <div class="hl"><span data-i18n="feels"></span> <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+        <div class="trip hidden" id="tripChip"></div>
         <div class="chip hidden" id="normChip"></div>
         <div class="tm glass">
           <div class="tm-head"><span id="tmLabel"></span><button class="hidden" id="tmReset"><i class="fa-solid fa-rotate-left"></i><span data-i18n="tmBack"></span></button></div>
@@ -710,6 +718,8 @@ const I18N = {
     alQuakeD:'{km} km μακριά · {ago}', alWhen:'{day} {from}–{to}',
     alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alLink:'ΕΜΥ', tomorrow:'Αύριο',
     tmNow:'Τώρα', tmBack:'Τώρα', tmHint:'Σύρετε για να δείτε τις επόμενες 24 ώρες', tmPlus12:'+12 ώρες', tmPlus24:'+24 ώρες',
+    tripDrive:'~{t} με αυτοκίνητο · {km} km', tripAir:'{km} km σε ευθεία γραμμή από εσάς', tripCalc:'Πόσο απέχει από εμένα;', tripDirections:'Οδηγίες', tripAttr:'Διαδρομή: OSRM', tripFix:'διόρθωση χάρτη',
+    durM:'{m} λεπτά', durH:'{h} ώ {m} λ', durHOnly:'{h} ώρες',
     share:'Κοινοποίηση', shareTitle:'Ο καιρός σήμερα', shareHint:'Μπορείτε επίσης να πατήσετε παρατεταμένα την εικόνα για να την αποθηκεύσετε.', close:'Κλείσιμο'
   },
   en: {
@@ -782,6 +792,8 @@ const I18N = {
     alQuakeD:'{km} km away · {ago}', alWhen:'{day} {from}–{to}',
     alNote:'Automatic estimate from the forecast. Official warnings:', alLink:'HNMS (EMY)', tomorrow:'Tomorrow',
     tmNow:'Now', tmBack:'Now', tmHint:'Slide to see the next 24 hours', tmPlus12:'+12 h', tmPlus24:'+24 h',
+    tripDrive:'~{t} by car · {km} km', tripAir:'{km} km from you (straight line)', tripCalc:'How far is it from me?', tripDirections:'Directions', tripAttr:'Route: OSRM', tripFix:'fix the map',
+    durM:'{m} min', durH:'{h} h {m} min', durHOnly:'{h} h',
     share:'Share', shareTitle:"Today's weather", shareHint:'You can also press and hold the image to save it.', close:'Close'
   }
 };
@@ -1006,6 +1018,7 @@ function locate(){
   }, {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
 }
 function useGPS(lat, lon, prev){
+  saveMe(lat, lon);
   const loc = {lat, lon, gps:true, cc:null};
   // keep the previous name while the new one loads if we have barely moved
   if(prev && prev.names && haversineKm(lat, lon, prev.lat, prev.lon) < 1) loc.names = prev.names;
@@ -1040,6 +1053,7 @@ function renderAll(){
   renderHeader();
   renderTimeTrack();
   renderHero();
+  renderTrip();
 
   renderStrip();
   renderRain();
@@ -1969,6 +1983,74 @@ async function doShare(){
 }
 
 /* =====================================================================
+   Distance & driving time from me (OSRM routing by FOSSGIS, fallback OSRM demo)
+   ===================================================================== */
+const trip = {req:0, cache:{}};
+function myPos(){
+  const m = store.get('wx_me', null);
+  return m && num(m.lat) && num(m.lon) && Date.now() - m.ts < 12 * 3600e3 ? m : null;
+}
+function saveMe(lat, lon){ store.set('wx_me', {lat, lon, ts:Date.now()}); }
+async function geoGranted(){
+  try{ const r = await navigator.permissions.query({name:'geolocation'}); return r.state === 'granted'; }
+  catch(e){ return false; }
+}
+function getPos(){
+  return new Promise((ok, fail) => {
+    if(!('geolocation' in navigator)) return fail(new Error('no geo'));
+    navigator.geolocation.getCurrentPosition(p => { saveMe(p.coords.latitude, p.coords.longitude); ok(myPos()); }, fail,
+      {enableHighAccuracy:false, timeout:10000, maximumAge:30 * 60 * 1000});
+  });
+}
+async function fetchRoute(a, b){
+  const key = [a.lat, a.lon, b.lat, b.lon].map(v => v.toFixed(3)).join(',');
+  if(trip.cache[key] !== undefined) return trip.cache[key];
+  const path = a.lon.toFixed(5) + ',' + a.lat.toFixed(5) + ';' + b.lon.toFixed(5) + ',' + b.lat.toFixed(5) + '?overview=false&alternatives=false&steps=false';
+  let r = null;
+  for(const base of ['https://routing.openstreetmap.de/routed-car/route/v1/driving/', 'https://router.project-osrm.org/route/v1/driving/']){
+    try{
+      const d = await getJSON(base + path, 12000);
+      if(d && d.code === 'Ok' && d.routes && d.routes[0] && num(d.routes[0].duration)){ r = {km:d.routes[0].distance / 1000, min:d.routes[0].duration / 60}; break; }
+      if(d && d.code === 'NoRoute'){ r = null; break; }
+    }catch(e){}
+  }
+  trip.cache[key] = r;
+  return r;
+}
+function fmtDur(min){
+  min = Math.max(1, Math.round(min));
+  if(min < 60) return t('durM', {m:min});
+  const h = Math.floor(min / 60), m = Math.round(min % 60);
+  return m ? t('durH', {h, m}) : t('durHOnly', {h});
+}
+async function renderTrip(){
+  const el = $('#tripChip'), loc = state.loc;
+  const myReq = ++trip.req;
+  if(!loc || loc.gps){ el.classList.add('hidden'); return; }
+  let me = myPos();
+  if(!me && await geoGranted()){ try{ me = await getPos(); }catch(e){} }
+  if(myReq !== trip.req || state.loc !== loc) return;
+  if(!me){
+    el.innerHTML = '<button class="trip-calc" id="tripCalc"><i class="fa-solid fa-car"></i>' + esc(t('tripCalc')) + '</button>';
+    el.classList.remove('hidden');
+    return;
+  }
+  const straight = haversineKm(me.lat, me.lon, loc.lat, loc.lon);
+  if(straight < 1){ el.classList.add('hidden'); return; }
+  el.innerHTML = '<span class="trip-main"><i class="fa-solid fa-car"></i>…</span>';
+  el.classList.remove('hidden');
+  const route = straight <= 2500 ? await fetchRoute(me, loc) : null;
+  if(myReq !== trip.req || state.loc !== loc) return;
+  const maps = 'https://maps.apple.com/?saddr=' + me.lat.toFixed(5) + ',' + me.lon.toFixed(5) + '&daddr=' + loc.lat.toFixed(5) + ',' + loc.lon.toFixed(5) + '&dirflg=d';
+  const main = route
+    ? '<i class="fa-solid fa-car"></i>' + esc(t('tripDrive', {t:fmtDur(route.min), km:Math.round(route.km).toLocaleString(t('locale'))}))
+    : '<i class="fa-solid fa-ruler"></i>' + esc(t('tripAir', {km:Math.round(straight).toLocaleString(t('locale'))}));
+  el.innerHTML = '<span class="trip-main">' + main + '</span>' +
+    '<a class="trip-go" href="' + maps + '" target="_blank" rel="noopener"><i class="fa-solid fa-diamond-turn-right"></i>' + esc(t('tripDirections')) + '</a>' +
+    (route ? '<span class="trip-attr">' + esc(t('tripAttr')) + ' © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · <a href="https://www.openstreetmap.org/fixthemap" target="_blank" rel="noopener">' + esc(t('tripFix')) + '</a></span>' : '');
+}
+
+/* =====================================================================
    Live effects (canvas)
    ===================================================================== */
 const fx = {
@@ -2257,6 +2339,10 @@ $('#tm').addEventListener('input', e => {
 });
 $('#tmReset').addEventListener('click', () => { state.tm = 0; $('#tm').value = 0; if(state.wx) renderHero(); });
 $('#shareBtn').addEventListener('click', () => { if(state.wx) openShare(); });
+$('#tripChip').addEventListener('click', e => {
+  if(!e.target.closest('#tripCalc')) return;
+  getPos().then(() => renderTrip()).catch(err => toast(err && err.code === 1 ? t('geoDenied') : t('geoFailed')));
+});
 $('#shareGo').addEventListener('click', doShare);
 $('#shareClose').addEventListener('click', () => $('#shareSheet').classList.add('hidden'));
 $('#shareSheet').addEventListener('click', e => { if(e.target.id === 'shareSheet') $('#shareSheet').classList.add('hidden'); });
