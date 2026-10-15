@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#2b8ff0">
+<meta name="theme-color" content="#1f7fe0">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Καιρός">
 <meta name="application-name" content="Καιρός">
 <meta name="format-detection" content="telephone=no">
-<meta name="description" content="Premium εφαρμογή καιρού με δεδομένα Open-Meteo">
+<meta name="description" content="Premium weather app — Open-Meteo data">
 <title>Καιρός</title>
 <link rel="manifest" id="manifestLink">
 <link rel="apple-touch-icon" id="touchIcon">
@@ -28,6 +28,7 @@
   --glass-b:rgba(255,255,255,.28);
   --shadow:0 8px 32px rgba(0,0,0,.18);
   --glow:rgba(255,255,255,.18);
+  --rain:#7cc4ff;
   --nav-h:68px;
 }
 body.light{
@@ -36,7 +37,7 @@ body.light{
   --glass:rgba(255,255,255,.42);
   --glass-b:rgba(255,255,255,.75);
   --shadow:0 8px 28px rgba(40,60,90,.15);
-  --glow:rgba(255,255,255,.5);
+  --rain:#1f6fd1;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html,body{height:100%}
@@ -49,26 +50,29 @@ body{
 input{user-select:text;-webkit-user-select:text}
 button{font-family:inherit;cursor:pointer}
 
-/* ---------- Dynamic background (crossfade between two layers) ---------- */
-.bg{position:fixed;inset:0;z-index:-3;opacity:0;transition:opacity 1.4s ease}
+/* ---------- Dynamic background ---------- */
+.bg{position:fixed;inset:0;z-index:-4;opacity:0;transition:opacity 1.4s ease}
 .bg.on{opacity:1}
-.glow{position:fixed;inset:-25%;z-index:-2;pointer-events:none;
+.glow{position:fixed;inset:-25%;z-index:-3;pointer-events:none;
   background:radial-gradient(circle at 28% 18%,var(--glow),transparent 42%),
              radial-gradient(circle at 80% 85%,rgba(255,255,255,.08),transparent 40%);
-  animation:drift 20s ease-in-out infinite alternate;transition:background 1.4s}
+  animation:drift 20s ease-in-out infinite alternate}
 @keyframes drift{to{transform:translate(7%,5%) scale(1.05)}}
+#fx{position:fixed;inset:0;width:100%;height:100%;z-index:-2;pointer-events:none}
+.flash{position:fixed;inset:0;z-index:-1;pointer-events:none;background:rgba(220,225,255,.5);opacity:0}
 
 /* ---------- Layout ---------- */
 #app{height:100%;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top)}
 header.top{display:flex;align-items:center;gap:10px;padding:14px 18px 8px}
 .loc{flex:1;min-width:0}
 .loc h1{font-size:1.3rem;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:8px}
-.loc h1 i{font-size:.95rem;opacity:.85}
+.loc h1 i{font-size:.95rem;opacity:.85;flex:none}
+.loc h1 span{overflow:hidden;text-overflow:ellipsis}
 .loc p{font-size:.8rem;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .glass{background:var(--glass);border:1px solid var(--glass-b);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);box-shadow:var(--shadow)}
 .icon-btn{width:46px;height:46px;flex:none;border-radius:15px;display:grid;place-items:center;color:var(--ink);font-size:1.05rem;transition:transform .15s}
 .icon-btn:active{transform:scale(.9)}
-.icon-btn.spin i{animation:spin 1s linear infinite}
+.spin i{animation:spin 1s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 28px);-webkit-overflow-scrolling:touch}
@@ -78,6 +82,7 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h)
 
 .card{border-radius:24px;padding:16px;margin-bottom:14px}
 .card-title{display:flex;align-items:center;gap:8px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin-bottom:12px}
+.hidden{display:none !important}
 
 /* ---------- Hero ---------- */
 .hero{text-align:center;padding:10px 0 22px}
@@ -88,6 +93,26 @@ main{flex:1;overflow-y:auto;overflow-x:hidden;padding:6px 16px calc(var(--nav-h)
 .hero .desc{font-size:1.15rem;font-weight:500;margin-top:6px}
 .hero .hl{font-size:.9rem;color:var(--ink-soft);margin-top:8px}
 .hero .hl b{color:var(--ink);font-weight:600}
+
+/* ---------- 24h strip ---------- */
+.strip{display:flex;gap:8px;overflow-x:auto;scroll-snap-type:x proximity;margin:0 -4px;padding:0 4px 2px;-webkit-overflow-scrolling:touch}
+.strip::-webkit-scrollbar{display:none}
+.strip .h{flex:none;width:58px;text-align:center;padding:10px 0;border-radius:16px;scroll-snap-align:start}
+.strip .h.now{background:var(--glass-b)}
+.strip .ht{font-size:.74rem;color:var(--ink-soft);font-weight:600}
+.strip .h.now .ht{color:var(--ink)}
+.strip .h i{font-size:1.25rem;display:block;margin:9px 0}
+.strip .hv{font-weight:600;font-size:.98rem}
+.strip .hp{font-size:.66rem;color:var(--rain);font-weight:700;min-height:.95rem;margin-top:3px}
+
+/* ---------- Rain next 2h ---------- */
+.rain-msg{font-size:1rem;font-weight:600;display:flex;align-items:center;gap:10px;line-height:1.3}
+.rain-msg i{font-size:1.2rem;color:var(--rain);flex:none}
+.rbars{display:flex;align-items:flex-end;gap:5px;height:58px;margin-top:14px}
+.rbars div{flex:1;border-radius:6px 6px 2px 2px;min-height:4px;transition:height .8s ease;background:linear-gradient(180deg,#9fd4ff,#3a8dff)}
+.rbars div.dry{background:var(--glass-b)}
+.rlabels{display:flex;justify-content:space-between;font-size:.68rem;color:var(--ink-soft);margin-top:6px}
+.note{font-size:.7rem;color:var(--ink-soft);margin-top:8px}
 
 /* ---------- Tiles ---------- */
 .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
@@ -101,13 +126,21 @@ body.light .bar{background:rgba(22,32,44,.12)}
 .bar>span{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,#7cc4ff,#3a8dff);transition:width 1s ease}
 .uv-scale{position:relative;height:7px;border-radius:9px;margin-top:10px;background:linear-gradient(90deg,#3ddc84 0%,#ffd23f 27%,#ff9233 50%,#ff4d4d 72%,#b46bff 100%)}
 .uv-scale i{position:absolute;top:50%;width:13px;height:13px;border-radius:50%;background:#fff;border:2px solid rgba(0,0,0,.35);transform:translate(-50%,-50%);transition:left 1s ease}
-.badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:20px;color:#111;margin-top:6px;width:max-content}
+.badge{display:inline-flex;align-items:center;gap:6px;font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:20px;color:#111;margin-top:6px;width:max-content;max-width:100%}
 .compass{width:46px;height:46px;border-radius:50%;border:2px solid var(--glass-b);display:grid;place-items:center;position:relative;flex:none}
-.compass::before{content:'Β';position:absolute;top:-1px;font-size:.55rem;font-weight:700;color:var(--ink-soft)}
+.compass b{position:absolute;top:-1px;font-size:.55rem;font-weight:700;color:var(--ink-soft)}
 .compass i{font-size:1rem;transition:transform 1s ease}
 .wind-row{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .tile.link{cursor:pointer}
 .tile.link:active{transform:scale(.97)}
+
+/* ---------- Sea ---------- */
+.sea-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;text-align:center}
+.sea-grid .sv{font-size:1.35rem;font-weight:600;margin-top:6px}
+.sea-grid .sv small{font-size:.75rem;color:var(--ink-soft);font-weight:500;margin-left:2px}
+.sea-grid .sl{font-size:.7rem;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.sea-grid i.wd{display:inline-block;font-size:.8rem;margin-left:4px;transition:transform 1s}
+.sea-state{display:flex;align-items:center;justify-content:space-between;margin-top:12px;font-size:.82rem;color:var(--ink-soft)}
 
 /* ---------- Sun card ---------- */
 .sun-wrap{display:flex;align-items:flex-end;justify-content:space-between;gap:10px}
@@ -119,11 +152,11 @@ body.light .bar{background:rgba(22,32,44,.12)}
 .sun-meta{text-align:center;font-size:.8rem;color:var(--ink-soft);margin-top:8px}
 
 /* ---------- Forecast ---------- */
-.seg{display:flex;padding:4px;border-radius:14px;gap:4px;margin-bottom:12px;background:rgba(0,0,0,.12)}
+.seg{display:flex;padding:4px;border-radius:14px;gap:4px;background:rgba(0,0,0,.12)}
 body.light .seg{background:rgba(22,32,44,.08)}
-.seg button{flex:1;border:0;background:transparent;color:var(--ink-soft);font-weight:600;font-size:.85rem;padding:10px;border-radius:11px;transition:all .25s}
+.seg button{flex:1;border:0;background:transparent;color:var(--ink-soft);font-weight:600;font-size:.85rem;padding:10px 6px;border-radius:11px;transition:all .25s}
 .seg button.on{background:var(--glass-b);color:var(--ink);box-shadow:0 2px 10px rgba(0,0,0,.12)}
-.chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin:0 -6px;padding:0 6px}
+.chart-scroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;margin:12px -6px 0;padding:0 6px}
 .chart-scroll::-webkit-scrollbar{display:none}
 .chart-inner{height:270px;position:relative}
 .hint{font-size:.72rem;color:var(--ink-soft);text-align:center;margin-top:6px}
@@ -132,14 +165,29 @@ body.light .seg{background:rgba(22,32,44,.08)}
 .day .dn{font-weight:600}
 .day .dn small{display:block;font-size:.7rem;font-weight:500;color:var(--ink-soft)}
 .day .di{font-size:1.3rem;text-align:center}
-.day .dp{font-size:.78rem;color:#7cc4ff;font-weight:600}
-body.light .day .dp{color:#1f6fd1}
+.day .dp{font-size:.78rem;color:var(--rain);font-weight:600}
 .range{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:600}
 .range .lo{color:var(--ink-soft);width:30px;text-align:right}
 .range .hi{width:30px}
 .range .track{flex:1;height:6px;border-radius:6px;background:rgba(255,255,255,.18);position:relative}
 body.light .range .track{background:rgba(22,32,44,.1)}
 .range .track span{position:absolute;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,#6ec6ff,#ffd23f,#ff9233)}
+
+/* ---------- Radar ---------- */
+#radarMap{height:56vh;min-height:300px;border-radius:18px;overflow:hidden;isolation:isolate;background:#1b2233}
+body.light #radarMap{background:#dfe6ee}
+.leaflet-container{font-family:inherit}
+.leaflet-control-attribution{font-size:9px !important}
+.leaflet-bar{border:0 !important;border-radius:12px !important;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.25) !important}
+.leaflet-bar a{width:36px !important;height:36px !important;line-height:36px !important;background:rgba(20,26,40,.75) !important;color:#fff !important;border-bottom:1px solid rgba(255,255,255,.15) !important;backdrop-filter:blur(8px)}
+body.light .leaflet-bar a{background:rgba(255,255,255,.85) !important;color:#16202c !important;border-bottom-color:rgba(0,0,0,.08) !important}
+.radar-ctl{display:flex;align-items:center;gap:12px;margin-top:12px}
+.play{width:48px;height:48px;flex:none;border-radius:50%;display:grid;place-items:center;color:var(--ink);font-size:1rem;border:1px solid var(--glass-b);background:var(--glass-b)}
+.radar-ctl input{flex:1;accent-color:#3a8dff;height:30px}
+.radar-time{min-width:58px;text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.radar-time small{display:block;font-size:.66rem;font-weight:500;color:var(--ink-soft)}
+.radar-msg{text-align:center;color:var(--ink-soft);font-size:.85rem;padding:10px 0 0}
+.me-dot{width:16px;height:16px;border-radius:50%;background:#3a8dff;border:3px solid #fff;box-shadow:0 0 0 6px rgba(58,141,255,.3)}
 
 /* ---------- Air quality ---------- */
 .aqi-main{display:flex;align-items:center;gap:18px}
@@ -158,7 +206,7 @@ body.light .range .track{background:rgba(22,32,44,.1)}
 .aqi-legend span{flex:1;height:6px;border-radius:4px}
 .aqi-legend-l{display:flex;justify-content:space-between;font-size:.66rem;color:var(--ink-soft);margin-top:5px}
 
-/* ---------- Search ---------- */
+/* ---------- Search & settings ---------- */
 .search-box{display:flex;align-items:center;gap:10px;border-radius:18px;padding:4px 6px 4px 16px;margin-bottom:12px}
 .search-box i{color:var(--ink-soft)}
 .search-box input{flex:1;background:transparent;border:0;outline:0;color:var(--ink);font-size:1rem;font-family:inherit;padding:12px 0;min-width:0}
@@ -166,7 +214,7 @@ body.light .range .track{background:rgba(22,32,44,.1)}
 .search-box button{border:0;background:transparent;color:var(--ink-soft);width:40px;height:40px;font-size:1rem;display:none}
 .locate-wide{width:100%;border-radius:18px;padding:15px;display:flex;align-items:center;justify-content:center;gap:10px;color:var(--ink);font-size:.95rem;font-weight:600;margin-bottom:14px;transition:transform .15s}
 .locate-wide:active{transform:scale(.98)}
-.results{border-radius:22px;overflow:hidden}
+.results{border-radius:22px;overflow:hidden;margin-bottom:18px}
 .res{display:flex;align-items:center;gap:14px;padding:14px 16px;border-bottom:1px solid var(--glass-b);cursor:pointer;transition:background .2s}
 .res:last-child{border-bottom:0}
 .res:active{background:rgba(255,255,255,.15)}
@@ -177,39 +225,50 @@ body.light .range .track{background:rgba(22,32,44,.1)}
 .empty{padding:26px 16px;text-align:center;color:var(--ink-soft);font-size:.9rem}
 .empty i{font-size:1.8rem;display:block;margin-bottom:10px;opacity:.7}
 .section-label{font-size:.75rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:6px 4px 10px}
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 0}
+.set-row + .set-row{border-top:1px solid var(--glass-b);margin-top:8px;padding-top:14px}
+.set-row .sl{display:flex;align-items:center;gap:10px;font-weight:600;font-size:.92rem}
+.set-row .seg{width:190px;flex:none}
+.set-row .seg button{padding:8px 4px;font-size:.8rem}
 
 /* ---------- Bottom navigation ---------- */
-nav.bottom{position:fixed;left:12px;right:12px;bottom:calc(10px + env(safe-area-inset-bottom));height:var(--nav-h);display:flex;align-items:center;border-radius:26px;z-index:20}
-nav.bottom button{flex:1;height:100%;border:0;background:none;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:.68rem;font-weight:600;position:relative;transition:color .25s}
-nav.bottom button i{font-size:1.2rem;transition:transform .25s}
+nav.bottom{position:fixed;left:10px;right:10px;bottom:calc(10px + env(safe-area-inset-bottom));height:var(--nav-h);display:flex;align-items:center;border-radius:26px;z-index:20}
+nav.bottom button{flex:1;min-width:0;height:100%;border:0;background:none;color:var(--ink-soft);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:.64rem;font-weight:600;position:relative;transition:color .25s}
+nav.bottom button span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+nav.bottom button i{font-size:1.15rem;transition:transform .25s}
 nav.bottom button.active{color:var(--ink)}
 nav.bottom button.active i{transform:translateY(-2px) scale(1.08)}
-nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5px;height:5px;border-radius:50%;background:var(--ink)}
+nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5px;height:5px;border-radius:50%;background:var(--ink)}
 
 /* ---------- Loader & toast ---------- */
 .loader{position:fixed;inset:0;display:grid;place-items:center;z-index:30;pointer-events:none;opacity:0;transition:opacity .3s}
 .loader.on{opacity:1}
 .loader div{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;font-size:1.4rem}
 .loader i{animation:spin 1s linear infinite}
-.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);transform:translate(-50%,20px);opacity:0;padding:12px 18px;border-radius:16px;font-size:.85rem;font-weight:500;z-index:40;transition:all .35s;max-width:88%;text-align:center;background:rgba(15,20,35,.88);color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.toast{position:fixed;left:50%;bottom:calc(var(--nav-h) + env(safe-area-inset-bottom) + 24px);transform:translate(-50%,20px);opacity:0;padding:12px 18px;border-radius:16px;font-size:.85rem;font-weight:500;z-index:40;transition:all .35s;max-width:88%;text-align:center;background:rgba(15,20,35,.88);color:#fff;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);pointer-events:none}
 .toast.on{opacity:1;transform:translate(-50%,0)}
 .updated{text-align:center;font-size:.7rem;color:var(--ink-soft);margin:4px 0 6px}
 .updated a{color:inherit}
+@media (prefers-reduced-motion: reduce){
+  .glow,.hero .big-icon{animation:none}
+}
 </style>
 </head>
 <body>
 <div class="bg on" id="bgA"></div>
 <div class="bg" id="bgB"></div>
 <div class="glow"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<div class="flash" id="flash"></div>
 
 <div id="app">
   <header class="top">
     <div class="loc">
-      <h1><i class="fa-solid fa-location-dot"></i><span id="locName">Φόρτωση…</span></h1>
+      <h1><i class="fa-solid fa-location-dot" id="locIcon"></i><span id="locName">…</span></h1>
       <p id="locSub">&nbsp;</p>
     </div>
-    <button class="icon-btn glass" id="btnRefresh" aria-label="Ανανέωση"><i class="fa-solid fa-rotate-right"></i></button>
-    <button class="icon-btn glass" id="btnLocate" aria-label="Εντοπισμός"><i class="fa-solid fa-location-crosshairs"></i></button>
+    <button class="icon-btn glass" id="btnRefresh" data-i18n-aria="refresh"><i class="fa-solid fa-rotate-right"></i></button>
+    <button class="icon-btn glass" id="btnLocate" data-i18n-aria="locate"><i class="fa-solid fa-location-crosshairs"></i></button>
   </header>
 
   <main id="main">
@@ -219,59 +278,82 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5p
         <i class="fa-solid fa-sun big-icon" id="heroIcon"></i>
         <div class="temp"><span id="temp">--</span><sup>°C</sup></div>
         <div class="desc" id="desc">—</div>
-        <div class="hl">Αίσθηση <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+        <div class="hl"><span data-i18n="feels"></span> <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+      </div>
+
+      <div class="card glass">
+        <div class="card-title"><i class="fa-regular fa-clock"></i><span data-i18n="hours24"></span></div>
+        <div class="strip" id="strip"></div>
+      </div>
+
+      <div class="card glass hidden" id="rainCard">
+        <div class="card-title"><i class="fa-solid fa-cloud-rain"></i><span id="rainTitle" data-i18n="rainTitle"></span></div>
+        <div class="rain-msg" id="rainMsg"></div>
+        <div class="rbars" id="rainBars"></div>
+        <div class="rlabels"><span data-i18n="nowLabel"></span><span data-i18n="plus1h"></span><span data-i18n="plus2h"></span></div>
+        <div class="note" data-i18n="rainNote"></div>
       </div>
 
       <div class="grid">
         <div class="tile glass">
-          <div class="t-head"><i class="fa-solid fa-droplet"></i>Υγρασία</div>
+          <div class="t-head"><i class="fa-solid fa-droplet"></i><span data-i18n="humidity"></span></div>
           <div class="t-val" id="hum">--<small>%</small></div>
           <div class="bar"><span id="humBar" style="width:0"></span></div>
           <div class="t-sub" id="humSub">—</div>
         </div>
 
         <div class="tile glass">
-          <div class="t-head"><i class="fa-solid fa-wind"></i>Άνεμος</div>
+          <div class="t-head"><i class="fa-solid fa-wind"></i><span data-i18n="wind"></span></div>
           <div class="wind-row">
             <div class="t-val" style="margin-top:0" id="wind">--<small>km/h</small></div>
-            <div class="compass"><i class="fa-solid fa-location-arrow" id="windArrow"></i></div>
+            <div class="compass"><b id="compN">Β</b><i class="fa-solid fa-location-arrow" id="windArrow"></i></div>
           </div>
           <div class="t-sub" id="windSub">—</div>
         </div>
 
         <div class="tile glass">
-          <div class="t-head"><i class="fa-solid fa-sun"></i>Δείκτης UV</div>
+          <div class="t-head"><i class="fa-solid fa-sun"></i><span data-i18n="uv"></span></div>
           <div class="t-val" id="uv">--</div>
           <div class="uv-scale"><i id="uvDot" style="left:0"></i></div>
           <div class="t-sub"><span class="badge" id="uvBadge">—</span></div>
         </div>
 
         <div class="tile glass">
-          <div class="t-head"><i class="fa-solid fa-mountain-sun"></i>Υψόμετρο</div>
-          <div class="t-val" id="elev">--<small>μ</small></div>
+          <div class="t-head"><i class="fa-solid fa-mountain-sun"></i><span data-i18n="elevation"></span></div>
+          <div class="t-val" id="elev">--</div>
           <div class="t-sub" id="coords">—</div>
         </div>
 
         <div class="tile glass">
-          <div class="t-head"><i class="fa-solid fa-gauge-high"></i>Πίεση</div>
+          <div class="t-head"><i class="fa-solid fa-gauge-high"></i><span data-i18n="pressure"></span></div>
           <div class="t-val" id="press">--<small>hPa</small></div>
           <div class="t-sub" id="pressSub">—</div>
         </div>
 
         <div class="tile glass link" id="aqiTile">
-          <div class="t-head"><i class="fa-solid fa-lungs"></i>Ποιότητα αέρα</div>
+          <div class="t-head"><i class="fa-solid fa-lungs"></i><span data-i18n="airQuality"></span></div>
           <div class="t-val" id="aqiMini">--</div>
           <div class="t-sub"><span class="badge" id="aqiMiniBadge">—</span></div>
         </div>
       </div>
 
+      <div class="card glass hidden" id="seaCard">
+        <div class="card-title"><i class="fa-solid fa-water"></i><span data-i18n="seaTitle"></span></div>
+        <div class="sea-grid">
+          <div><div class="sl" data-i18n="seaTemp"></div><div class="sv" id="seaT">--</div></div>
+          <div><div class="sl" data-i18n="waves"></div><div class="sv" id="seaW">--</div></div>
+          <div><div class="sl" data-i18n="period"></div><div class="sv" id="seaP">--</div></div>
+        </div>
+        <div class="sea-state"><span class="badge" id="seaBadge">—</span><span id="seaMax"></span></div>
+      </div>
+
       <div class="card glass">
-        <div class="card-title"><i class="fa-solid fa-circle-half-stroke"></i>Ανατολή &amp; Δύση</div>
+        <div class="card-title"><i class="fa-solid fa-circle-half-stroke"></i><span data-i18n="sunTitle"></span></div>
         <div class="sun-wrap">
           <div class="sun-col">
             <i class="fa-solid fa-sun" style="color:#ffc94a"></i>
             <div class="sv" id="sunrise">--:--</div>
-            <div class="sl">Ανατολή</div>
+            <div class="sl" data-i18n="sunrise"></div>
           </div>
           <svg class="sun-arc" viewBox="0 0 300 100" aria-hidden="true">
             <path d="M20 92 A130 80 0 0 1 280 92" fill="none" stroke="currentColor" stroke-opacity=".35" stroke-width="2.5" stroke-dasharray="5 7"/>
@@ -282,7 +364,7 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5p
           <div class="sun-col">
             <i class="fa-solid fa-moon" style="color:#b7a6ff"></i>
             <div class="sv" id="sunset">--:--</div>
-            <div class="sl">Δύση</div>
+            <div class="sl" data-i18n="sunset"></div>
           </div>
         </div>
         <div class="sun-meta" id="dayLen">—</div>
@@ -293,26 +375,40 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5p
     <!-- ================= FORECAST ================= -->
     <section class="view" id="view-forecast">
       <div class="card glass">
-        <div class="card-title"><i class="fa-solid fa-chart-line"></i>Πρόγνωση 5 ημερών</div>
-        <div class="seg">
-          <button class="on" data-mode="daily"><i class="fa-regular fa-calendar"></i>&nbsp; Ανά ημέρα</button>
-          <button data-mode="hourly"><i class="fa-regular fa-clock"></i>&nbsp; Ανά ώρα</button>
+        <div class="card-title"><i class="fa-solid fa-chart-line"></i><span data-i18n="forecastTitle"></span></div>
+        <div class="seg" id="modeSeg">
+          <button class="on" data-mode="daily"><i class="fa-regular fa-calendar"></i>&nbsp; <span data-i18n="byDay"></span></button>
+          <button data-mode="hourly"><i class="fa-regular fa-clock"></i>&nbsp; <span data-i18n="byHour"></span></button>
         </div>
         <div class="chart-scroll" id="chartScroll">
           <div class="chart-inner" id="chartInner"><canvas id="chart"></canvas></div>
         </div>
-        <div class="hint" id="chartHint">Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής</div>
+        <div class="hint" id="chartHint"></div>
       </div>
       <div class="card glass">
-        <div class="card-title"><i class="fa-solid fa-list"></i>Αναλυτικά</div>
+        <div class="card-title"><i class="fa-solid fa-list"></i><span data-i18n="details"></span></div>
         <div id="dayList"></div>
+      </div>
+    </section>
+
+    <!-- ================= RADAR ================= -->
+    <section class="view" id="view-radar">
+      <div class="card glass">
+        <div class="card-title"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="radarTitle"></span></div>
+        <div id="radarMap"></div>
+        <div class="radar-ctl">
+          <button class="play" id="radarPlay" data-i18n-aria="play"><i class="fa-solid fa-play"></i></button>
+          <input type="range" id="radarSlider" min="0" max="0" value="0" step="1">
+          <div class="radar-time" id="radarTime">--:--<small>&nbsp;</small></div>
+        </div>
+        <div class="radar-msg" id="radarMsg" data-i18n="radarHint"></div>
       </div>
     </section>
 
     <!-- ================= AIR ================= -->
     <section class="view" id="view-air">
       <div class="card glass">
-        <div class="card-title"><i class="fa-solid fa-lungs"></i>Ευρωπαϊκός δείκτης ποιότητας αέρα</div>
+        <div class="card-title"><i class="fa-solid fa-lungs"></i><span data-i18n="aqiTitle"></span></div>
         <div class="aqi-main">
           <div class="ring">
             <svg width="128" height="128" viewBox="0 0 128 128">
@@ -329,31 +425,50 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5p
         <div class="aqi-legend">
           <span style="background:#3ddc84"></span><span style="background:#a3e048"></span><span style="background:#ffd23f"></span><span style="background:#ff9233"></span><span style="background:#ff4d4d"></span><span style="background:#b46bff"></span>
         </div>
-        <div class="aqi-legend-l"><span>Καλή</span><span>Μέτρια</span><span>Εξαιρ. κακή</span></div>
+        <div class="aqi-legend-l"><span data-i18n="legGood"></span><span data-i18n="legMod"></span><span data-i18n="legBad"></span></div>
       </div>
-      <div class="section-label">Ρύποι (µg/m³)</div>
+      <div class="section-label" data-i18n="pollutants"></div>
       <div class="poll" id="pollGrid"></div>
-      <div class="updated" style="margin-top:14px">Πηγή: Open-Meteo Air Quality (CAMS)</div>
+      <div class="updated" style="margin-top:14px" data-i18n="aqiSource"></div>
     </section>
 
-    <!-- ================= SEARCH ================= -->
+    <!-- ================= SEARCH & SETTINGS ================= -->
     <section class="view" id="view-search">
       <div class="search-box glass">
         <i class="fa-solid fa-magnifying-glass"></i>
-        <input id="q" type="search" placeholder="Αναζήτηση πόλης… π.χ. Θεσσαλονίκη" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
-        <button id="qClear" aria-label="Καθαρισμός"><i class="fa-solid fa-xmark"></i></button>
+        <input id="q" type="search" data-i18n-ph="searchPh" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="search">
+        <button id="qClear" data-i18n-aria="clear"><i class="fa-solid fa-xmark"></i></button>
       </div>
-      <button class="locate-wide glass" id="btnLocate2"><i class="fa-solid fa-location-crosshairs"></i>Χρήση της τρέχουσας τοποθεσίας μου</button>
-      <div class="section-label" id="resLabel">Πρόσφατες αναζητήσεις</div>
+      <button class="locate-wide glass" id="btnLocate2"><i class="fa-solid fa-location-crosshairs"></i><span data-i18n="useLocation"></span></button>
+      <div class="section-label" id="resLabel"></div>
       <div class="results glass" id="results"></div>
+
+      <div class="section-label" data-i18n="settings"></div>
+      <div class="card glass">
+        <div class="set-row">
+          <div class="sl"><i class="fa-solid fa-language"></i><span data-i18n="language"></span></div>
+          <div class="seg" id="langSeg">
+            <button data-lang="el">Ελληνικά</button>
+            <button data-lang="en">English</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <div class="sl"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="effects"></span></div>
+          <div class="seg" id="fxSeg">
+            <button data-fx="1" data-i18n="on"></button>
+            <button data-fx="0" data-i18n="off"></button>
+          </div>
+        </div>
+      </div>
     </section>
   </main>
 
   <nav class="bottom glass">
-    <button class="active" data-view="now"><i class="fa-solid fa-house"></i>Τώρα</button>
-    <button data-view="forecast"><i class="fa-solid fa-chart-line"></i>Πρόγνωση</button>
-    <button data-view="air"><i class="fa-solid fa-leaf"></i>Αέρας</button>
-    <button data-view="search"><i class="fa-solid fa-magnifying-glass"></i>Αναζήτηση</button>
+    <button class="active" data-view="now"><i class="fa-solid fa-house"></i><span data-i18n="navNow"></span></button>
+    <button data-view="forecast"><i class="fa-solid fa-chart-line"></i><span data-i18n="navForecast"></span></button>
+    <button data-view="radar"><i class="fa-solid fa-satellite-dish"></i><span data-i18n="navRadar"></span></button>
+    <button data-view="air"><i class="fa-solid fa-leaf"></i><span data-i18n="navAir"></span></button>
+    <button data-view="search"><i class="fa-solid fa-magnifying-glass"></i><span data-i18n="navSearch"></span></button>
   </nav>
 </div>
 
@@ -364,86 +479,224 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:7px;width:5p
 (function(){
 'use strict';
 
-/* ================= Helpers ================= */
+/* =====================================================================
+   Helpers
+   ===================================================================== */
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const r0 = v => (v == null || isNaN(v)) ? '--' : Math.round(v);
+const num = v => typeof v === 'number' && isFinite(v);
+const r0 = v => num(v) ? Math.round(v) : '--';
 const store = {
   get(k, d){ try{ const v = localStorage.getItem(k); return v ? JSON.parse(v) : d; }catch(e){ return d; } },
   set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }
 };
-let toastTimer;
-function toast(msg){
-  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('on'), 3200);
+async function getJSON(url, timeoutMs){
+  const ctrl = ('AbortController' in window) ? new AbortController() : null;
+  const timer = ctrl ? setTimeout(() => ctrl.abort(), timeoutMs || 15000) : null;
+  try{
+    const res = await fetch(url, ctrl ? {signal:ctrl.signal} : undefined);
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    return await res.json();
+  } finally { if(timer) clearTimeout(timer); }
 }
-function loading(on){
-  $('#loader').classList.toggle('on', on);
-  $('#btnRefresh').classList.toggle('spin', on);
+function loadCSS(href){
+  return new Promise((ok, fail) => {
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href;
+    l.onload = ok; l.onerror = fail; document.head.appendChild(l);
+  });
 }
-async function getJSON(url){
-  const res = await fetch(url);
-  if(!res.ok) throw new Error('HTTP ' + res.status);
-  return res.json();
+function loadJS(src){
+  return new Promise((ok, fail) => {
+    const s = document.createElement('script'); s.src = src;
+    s.onload = ok; s.onerror = fail; document.head.appendChild(s);
+  });
 }
-const hhmm = iso => iso ? iso.slice(11, 16) : '--:--';
-const dayShort = iso => new Date(iso.slice(0,10) + 'T12:00:00').toLocaleDateString('el-GR', {weekday:'short'}).replace('.', '');
-const dayDate = iso => new Date(iso.slice(0,10) + 'T12:00:00').toLocaleDateString('el-GR', {day:'numeric', month:'short'});
+function haversineKm(a, b, c, d){
+  const R = 6371, rad = x => x * Math.PI / 180;
+  const dLat = rad(c - a), dLon = rad(d - b);
+  const h = Math.sin(dLat/2) ** 2 + Math.cos(rad(a)) * Math.cos(rad(c)) * Math.sin(dLon/2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
 const flag = cc => cc && cc.length === 2 ? String.fromCodePoint(...cc.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0))) : '🌍';
+const hhmm = iso => (typeof iso === 'string' && iso.length >= 16) ? iso.slice(11, 16) : '--:--';
 
-/* ================= WMO weather codes ================= */
-// code: [description, day icon, night icon, group]
-const WMO = {
-  0:['Καθαρός ουρανός','sun','moon','clear'],
-  1:['Κυρίως αίθριος','cloud-sun','cloud-moon','clear'],
-  2:['Μερική συννεφιά','cloud-sun','cloud-moon','cloudy'],
-  3:['Συννεφιά','cloud','cloud','cloudy'],
-  45:['Ομίχλη','smog','smog','fog'],
-  48:['Ομίχλη με πάχνη','smog','smog','fog'],
-  51:['Ελαφρύ ψιχάλισμα','cloud-rain','cloud-rain','rain'],
-  53:['Ψιχάλισμα','cloud-rain','cloud-rain','rain'],
-  55:['Πυκνό ψιχάλισμα','cloud-rain','cloud-rain','rain'],
-  56:['Παγωμένο ψιχάλισμα','icicles','icicles','rain'],
-  57:['Πυκνό παγωμένο ψιχάλισμα','icicles','icicles','rain'],
-  61:['Ασθενής βροχή','cloud-sun-rain','cloud-moon-rain','rain'],
-  63:['Βροχή','cloud-rain','cloud-rain','rain'],
-  65:['Ισχυρή βροχή','cloud-showers-heavy','cloud-showers-heavy','rain'],
-  66:['Παγωμένη βροχή','icicles','icicles','rain'],
-  67:['Ισχυρή παγωμένη βροχή','icicles','icicles','rain'],
-  71:['Ασθενής χιονόπτωση','snowflake','snowflake','snow'],
-  73:['Χιονόπτωση','snowflake','snowflake','snow'],
-  75:['Ισχυρή χιονόπτωση','snowflake','snowflake','snow'],
-  77:['Χιονόκοκκοι','snowflake','snowflake','snow'],
-  80:['Ασθενείς μπόρες','cloud-sun-rain','cloud-moon-rain','rain'],
-  81:['Μπόρες','cloud-showers-heavy','cloud-showers-heavy','rain'],
-  82:['Ισχυρές μπόρες','cloud-showers-water','cloud-showers-water','storm'],
-  85:['Χιονομπόρες','snowflake','snowflake','snow'],
-  86:['Ισχυρές χιονομπόρες','snowflake','snowflake','snow'],
-  95:['Καταιγίδα','cloud-bolt','cloud-bolt','storm'],
-  96:['Καταιγίδα με χαλάζι','cloud-bolt','cloud-bolt','storm'],
-  99:['Ισχυρή καταιγίδα με χαλάζι','cloud-bolt','cloud-bolt','storm']
+/* =====================================================================
+   Internationalisation
+   ===================================================================== */
+const I18N = {
+  el: {
+    locale:'el-GR', appName:'Καιρός',
+    navNow:'Τώρα', navForecast:'Πρόγνωση', navRadar:'Ραντάρ', navAir:'Αέρας', navSearch:'Αναζήτηση',
+    refresh:'Ανανέωση', locate:'Εντοπισμός', clear:'Καθαρισμός', play:'Αναπαραγωγή',
+    myLocation:'Η τοποθεσία μου', currentPos:'Τρέχουσα θέση', athens:'Αθήνα', attica:'Αττική, Ελλάδα',
+    feels:'Αίσθηση', hours24:'Επόμενες 24 ώρες', nowLabel:'Τώρα', plus1h:'+1 ώρα', plus2h:'+2 ώρες',
+    rainTitle:'Βροχή τις επόμενες 2 ώρες', rainNone:'Δεν αναμένεται βροχή τις επόμενες 2 ώρες',
+    rainStarts:'Βροχή σε ~{m}′', rainNowStops:'Βρέχει τώρα · σταματά σε ~{m}′', rainNowCont:'Βρέχει τώρα και θα συνεχίσει',
+    snowTitle:'Χιόνι τις επόμενες 2 ώρες', snowNone:'Δεν αναμένεται χιόνι τις επόμενες 2 ώρες',
+    snowStarts:'Χιόνι σε ~{m}′', snowNowStops:'Χιονίζει τώρα · σταματά σε ~{m}′', snowNowCont:'Χιονίζει τώρα και θα συνεχίσει',
+    rainNote:'Εκτίμηση ανά 15 λεπτά (mm)',
+    humidity:'Υγρασία', wind:'Άνεμος', uv:'Δείκτης UV', elevation:'Υψόμετρο', pressure:'Πίεση', airQuality:'Ποιότητα αέρα',
+    dewPoint:'Σημείο δρόσου {v}°', gusts:'ριπές', uvMax:'μέγ.', meters:'μ',
+    pressLow:'Χαμηλή πίεση', pressHigh:'Υψηλή πίεση', pressNormal:'Κανονική',
+    seaTitle:'Θάλασσα', seaTemp:'Νερό', waves:'Κύμα', period:'Περίοδος', waveMax:'Μέγ. κύμα σήμερα {v} m',
+    seaStates:['Γαλήνια','Ήρεμη','Λίγο ταραγμένη','Ταραγμένη','Πολύ ταραγμένη'],
+    sunTitle:'Ανατολή & Δύση', sunrise:'Ανατολή', sunset:'Δύση',
+    dayLen:'Διάρκεια ημέρας {h} ώ {m} λ', dayLeft:' · απομένουν {h} ώ {m} λ φωτός',
+    updated:'Ενημέρωση {t} (τοπική ώρα) · Δεδομένα',
+    forecastTitle:'Πρόγνωση 5 ημερών', byDay:'Ανά ημέρα', byHour:'Ανά ώρα',
+    hintDaily:'Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής ανά ημέρα',
+    hintHourly:'Σύρετε οριζόντια · θερμοκρασία και πιθανότητα βροχής ανά ώρα',
+    details:'Αναλυτικά', today:'Σήμερα', tMax:'Μέγιστη', tMin:'Ελάχιστη', tTemp:'Θερμοκρασία', rainProb:'Πιθ. βροχής',
+    radarTitle:'Ραντάρ βροχής', radarHint:'Τελευταίες 2 ώρες · ανανεώνεται κάθε 10 λεπτά',
+    radarErr:'Το ραντάρ δεν είναι διαθέσιμο αυτή τη στιγμή. Δοκιμάστε ξανά αργότερα.',
+    radarLatest:'τελευταίο', radarAgo:'πριν {m}′',
+    aqiTitle:'Ευρωπαϊκός δείκτης ποιότητας αέρα', pollutants:'Ρύποι (µg/m³)', aqiSource:'Πηγή: Open-Meteo Air Quality (CAMS)',
+    legGood:'Καλή', legMod:'Μέτρια', legBad:'Εξαιρ. κακή',
+    aqiL:['Καλή','Ικανοποιητική','Μέτρια','Κακή','Πολύ κακή','Εξαιρετικά κακή'],
+    aqiA:['Η ποιότητα του αέρα είναι εξαιρετική. Ιδανικές συνθήκες για δραστηριότητες έξω.',
+          'Καλή ποιότητα αέρα. Απολαύστε κανονικά τις υπαίθριες δραστηριότητες.',
+          'Οι ευαίσθητες ομάδες καλό είναι να περιορίσουν την έντονη άσκηση έξω.',
+          'Περιορίστε την παρατεταμένη ή έντονη δραστηριότητα σε εξωτερικούς χώρους.',
+          'Αποφύγετε την έντονη δραστηριότητα έξω. Κλειστά παράθυρα.',
+          'Παραμείνετε σε εσωτερικούς χώρους όσο είναι δυνατόν.'],
+    na:'Μη διαθέσιμο', aqiNoData:'Δεν υπάρχουν δεδομένα ποιότητας αέρα για αυτή την περιοχή.', aqiNoTitle:'Μη διαθέσιμα δεδομένα',
+    uvL:['Χαμηλός','Μέτριος','Υψηλός','Πολύ υψηλός','Ακραίος'],
+    searchPh:'Αναζήτηση πόλης… π.χ. Θεσσαλονίκη', useLocation:'Χρήση της τρέχουσας τοποθεσίας μου',
+    recent:'Πρόσφατες αναζητήσεις', results:'Αποτελέσματα', searching:'Αναζήτηση…',
+    noResults:'Δεν βρέθηκαν αποτελέσματα για «{q}»', netErr:'Σφάλμα σύνδεσης. Δοκιμάστε ξανά.',
+    searchEmpty:'Αναζητήστε οποιαδήποτε πόλη στον κόσμο, στα ελληνικά ή στα αγγλικά.',
+    settings:'Ρυθμίσεις', language:'Γλώσσα', effects:'Ζωντανά εφέ', on:'Ναι', off:'Όχι',
+    fetchErr:'Αδυναμία λήψης δεδομένων. Ελέγξτε τη σύνδεσή σας.',
+    geoUnsupported:'Ο εντοπισμός δεν υποστηρίζεται σε αυτή τη συσκευή.',
+    geoDenied:'Δεν δόθηκε άδεια εντοπισμού θέσης.', geoFailed:'Ο εντοπισμός απέτυχε. Δοκιμάστε την αναζήτηση.',
+    compass:['Β','ΒΑ','Α','ΝΑ','Ν','ΝΔ','Δ','ΒΔ'], north:'Β'
+  },
+  en: {
+    locale:'en-GB', appName:'Weather',
+    navNow:'Now', navForecast:'Forecast', navRadar:'Radar', navAir:'Air', navSearch:'Search',
+    refresh:'Refresh', locate:'Locate me', clear:'Clear', play:'Play',
+    myLocation:'My location', currentPos:'Current location', athens:'Athens', attica:'Attica, Greece',
+    feels:'Feels like', hours24:'Next 24 hours', nowLabel:'Now', plus1h:'+1 hour', plus2h:'+2 hours',
+    rainTitle:'Rain in the next 2 hours', rainNone:'No rain expected in the next 2 hours',
+    rainStarts:'Rain in ~{m} min', rainNowStops:'Raining now · stops in ~{m} min', rainNowCont:'Raining now and continuing',
+    snowTitle:'Snow in the next 2 hours', snowNone:'No snow expected in the next 2 hours',
+    snowStarts:'Snow in ~{m} min', snowNowStops:'Snowing now · stops in ~{m} min', snowNowCont:'Snowing now and continuing',
+    rainNote:'15-minute estimate (mm)',
+    humidity:'Humidity', wind:'Wind', uv:'UV index', elevation:'Elevation', pressure:'Pressure', airQuality:'Air quality',
+    dewPoint:'Dew point {v}°', gusts:'gusts', uvMax:'max', meters:'m',
+    pressLow:'Low pressure', pressHigh:'High pressure', pressNormal:'Normal',
+    seaTitle:'Sea', seaTemp:'Water', waves:'Waves', period:'Period', waveMax:'Max waves today {v} m',
+    seaStates:['Calm','Smooth','Slight','Moderate','Rough'],
+    sunTitle:'Sunrise & Sunset', sunrise:'Sunrise', sunset:'Sunset',
+    dayLen:'Daylight {h}h {m}m', dayLeft:' · {h}h {m}m of light left',
+    updated:'Updated {t} (local time) · Data',
+    forecastTitle:'5-day forecast', byDay:'Daily', byHour:'Hourly',
+    hintDaily:'Daily high / low temperature and chance of rain',
+    hintHourly:'Swipe sideways · hourly temperature and chance of rain',
+    details:'Details', today:'Today', tMax:'High', tMin:'Low', tTemp:'Temperature', rainProb:'Rain chance',
+    radarTitle:'Rain radar', radarHint:'Last 2 hours · updates every 10 minutes',
+    radarErr:'Radar is unavailable right now. Please try again later.',
+    radarLatest:'latest', radarAgo:'{m} min ago',
+    aqiTitle:'European Air Quality Index', pollutants:'Pollutants (µg/m³)', aqiSource:'Source: Open-Meteo Air Quality (CAMS)',
+    legGood:'Good', legMod:'Moderate', legBad:'Extremely poor',
+    aqiL:['Good','Fair','Moderate','Poor','Very poor','Extremely poor'],
+    aqiA:['Air quality is excellent. Ideal conditions for outdoor activities.',
+          'Good air quality. Enjoy your usual outdoor activities.',
+          'Sensitive groups should consider reducing intense outdoor exercise.',
+          'Reduce prolonged or intense activity outdoors.',
+          'Avoid intense outdoor activity. Keep windows closed.',
+          'Stay indoors as much as possible.'],
+    na:'Unavailable', aqiNoData:'No air-quality data is available for this area.', aqiNoTitle:'No data',
+    uvL:['Low','Moderate','High','Very high','Extreme'],
+    searchPh:'Search a city… e.g. Thessaloniki', useLocation:'Use my current location',
+    recent:'Recent searches', results:'Results', searching:'Searching…',
+    noResults:'No results for “{q}”', netErr:'Connection error. Please try again.',
+    searchEmpty:'Search any city in the world, in English or Greek.',
+    settings:'Settings', language:'Language', effects:'Live effects', on:'On', off:'Off',
+    fetchErr:'Could not load data. Check your connection.',
+    geoUnsupported:'Location is not supported on this device.',
+    geoDenied:'Location permission was not granted.', geoFailed:'Could not get your location. Try searching instead.',
+    compass:['N','NE','E','SE','S','SW','W','NW'], north:'N'
+  }
 };
-const wmo = c => WMO[c] || ['Άγνωστο','cloud','cloud','cloudy'];
-const wIcon = (c, isDay) => 'fa-' + wmo(c)[isDay ? 1 : 2];
+let lang = store.get('wx_lang', 'el');
+if(!I18N[lang]) lang = 'el';
+function t(key, vars){
+  let s = I18N[lang][key];
+  if(s === undefined) s = I18N.el[key];
+  if(s === undefined) return key;
+  if(vars && typeof s === 'string') s = s.replace(/\{(\w+)\}/g, (m, k) => vars[k] != null ? vars[k] : m);
+  return s;
+}
+const fmt1 = v => num(v) ? v.toLocaleString(t('locale'), {maximumFractionDigits:1}) : '--';
+function applyStatic(){
+  document.documentElement.lang = lang;
+  document.title = t('appName');
+  $$('[data-i18n]').forEach(el => { el.textContent = t(el.dataset.i18n); });
+  $$('[data-i18n-ph]').forEach(el => { el.placeholder = t(el.dataset.i18nPh); });
+  $$('[data-i18n-aria]').forEach(el => { el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+  $('#compN').textContent = t('north');
+  $$('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.lang === lang));
+  $$('#fxSeg button').forEach(b => b.classList.toggle('on', (b.dataset.fx === '1') === fx.enabled));
+}
 
-/* ================= Dynamic themes ================= */
-// key: [gradient, isLightTheme, theme-color, glow]
+/* =====================================================================
+   WMO weather codes: [el, en, day icon, night icon, group]
+   ===================================================================== */
+const WMO = {
+  0:['Καθαρός ουρανός','Clear sky','sun','moon','clear'],
+  1:['Κυρίως αίθριος','Mainly clear','cloud-sun','cloud-moon','clear'],
+  2:['Μερική συννεφιά','Partly cloudy','cloud-sun','cloud-moon','cloudy'],
+  3:['Συννεφιά','Overcast','cloud','cloud','cloudy'],
+  45:['Ομίχλη','Fog','smog','smog','fog'],
+  48:['Ομίχλη με πάχνη','Rime fog','smog','smog','fog'],
+  51:['Ελαφρύ ψιχάλισμα','Light drizzle','cloud-rain','cloud-rain','rain'],
+  53:['Ψιχάλισμα','Drizzle','cloud-rain','cloud-rain','rain'],
+  55:['Πυκνό ψιχάλισμα','Dense drizzle','cloud-rain','cloud-rain','rain'],
+  56:['Παγωμένο ψιχάλισμα','Freezing drizzle','icicles','icicles','rain'],
+  57:['Πυκνό παγωμένο ψιχάλισμα','Dense freezing drizzle','icicles','icicles','rain'],
+  61:['Ασθενής βροχή','Light rain','cloud-sun-rain','cloud-moon-rain','rain'],
+  63:['Βροχή','Rain','cloud-rain','cloud-rain','rain'],
+  65:['Ισχυρή βροχή','Heavy rain','cloud-showers-heavy','cloud-showers-heavy','rain'],
+  66:['Παγωμένη βροχή','Freezing rain','icicles','icicles','rain'],
+  67:['Ισχυρή παγωμένη βροχή','Heavy freezing rain','icicles','icicles','rain'],
+  71:['Ασθενής χιονόπτωση','Light snow','snowflake','snowflake','snow'],
+  73:['Χιονόπτωση','Snow','snowflake','snowflake','snow'],
+  75:['Ισχυρή χιονόπτωση','Heavy snow','snowflake','snowflake','snow'],
+  77:['Χιονόκοκκοι','Snow grains','snowflake','snowflake','snow'],
+  80:['Ασθενείς μπόρες','Light showers','cloud-sun-rain','cloud-moon-rain','rain'],
+  81:['Μπόρες','Showers','cloud-showers-heavy','cloud-showers-heavy','rain'],
+  82:['Ισχυρές μπόρες','Violent showers','cloud-showers-water','cloud-showers-water','storm'],
+  85:['Χιονομπόρες','Snow showers','snowflake','snowflake','snow'],
+  86:['Ισχυρές χιονομπόρες','Heavy snow showers','snowflake','snowflake','snow'],
+  95:['Καταιγίδα','Thunderstorm','cloud-bolt','cloud-bolt','storm'],
+  96:['Καταιγίδα με χαλάζι','Thunderstorm with hail','cloud-bolt','cloud-bolt','storm'],
+  99:['Ισχυρή καταιγίδα με χαλάζι','Severe thunderstorm with hail','cloud-bolt','cloud-bolt','storm']
+};
+const wmo = c => WMO[c] || ['—','—','cloud','cloud','cloudy'];
+const wDesc = c => wmo(c)[lang === 'en' ? 1 : 0];
+const wIcon = (c, isDay) => 'fa-' + wmo(c)[isDay ? 2 : 3];
+
+/* =====================================================================
+   Themes (background gradients)
+   ===================================================================== */
+// key: [gradient, light theme?, theme-color, glow]
 const THEMES = {
-  'clear-day':   ['linear-gradient(165deg,#1f7fe0 0%,#4fb0f2 45%,#9fd3f5 72%,#f7c86a 100%)', false, '#1f7fe0', 'rgba(255,214,110,.45)'],
+  'clear-day':   ['linear-gradient(165deg,#1a6fd0 0%,#3f9ee8 45%,#74b7e6 74%,#e3a957 100%)', false, '#1f7fe0', 'rgba(255,214,110,.45)'],
   'clear-night': ['linear-gradient(165deg,#070b22 0%,#1a1546 45%,#3a2470 80%,#5a3489 100%)', false, '#070b22', 'rgba(170,140,255,.22)'],
   'cloudy-day':  ['linear-gradient(165deg,#9fb2c6 0%,#c7d3de 50%,#eef2f5 100%)', true, '#9fb2c6', 'rgba(255,255,255,.55)'],
   'cloudy-night':['linear-gradient(165deg,#161b30 0%,#2c3352 55%,#4a4f70 100%)', false, '#161b30', 'rgba(160,170,220,.16)'],
   'rain-day':    ['linear-gradient(165deg,#2f3d50 0%,#4b5d74 50%,#7488a0 100%)', false, '#2f3d50', 'rgba(150,190,255,.18)'],
   'rain-night':  ['linear-gradient(165deg,#0b1220 0%,#1b2638 55%,#2c3b52 100%)', false, '#0b1220', 'rgba(120,160,230,.14)'],
   'storm':       ['linear-gradient(165deg,#14141f 0%,#2e2a44 50%,#55466a 100%)', false, '#14141f', 'rgba(190,150,255,.2)'],
-  'snow-day':    ['linear-gradient(165deg,#c4d3e4 0%,#e6eef6 55%,#ffffff 100%)', true, '#c4d3e4', 'rgba(255,255,255,.7)'],
+  'snow-day':    ['linear-gradient(165deg,#b8c8db 0%,#dbe5f0 55%,#f4f7fb 100%)', true, '#b8c8db', 'rgba(255,255,255,.7)'],
   'snow-night':  ['linear-gradient(165deg,#18233b 0%,#34466a 55%,#64769a 100%)', false, '#18233b', 'rgba(200,220,255,.2)'],
   'fog-day':     ['linear-gradient(165deg,#a3adb6 0%,#c9d0d6 55%,#e5e8eb 100%)', true, '#a3adb6', 'rgba(255,255,255,.6)'],
   'fog-night':   ['linear-gradient(165deg,#1e232b 0%,#363d48 55%,#525a66 100%)', false, '#1e232b', 'rgba(200,200,220,.14)']
 };
 function themeKey(code, isDay){
-  const g = wmo(code)[3];
+  const g = wmo(code)[4];
   if(g === 'storm') return 'storm';
   return g + (isDay ? '-day' : '-night');
 }
@@ -451,209 +704,372 @@ let activeBg = 'A', currentTheme = null;
 function applyTheme(key){
   if(key === currentTheme) return;
   currentTheme = key;
-  const t = THEMES[key];
+  const th = THEMES[key] || THEMES['clear-day'];
   const next = activeBg === 'A' ? 'B' : 'A';
   const nextEl = $('#bg' + next), curEl = $('#bg' + activeBg);
-  nextEl.style.background = t[0];
+  nextEl.style.background = th[0];
   requestAnimationFrame(() => { nextEl.classList.add('on'); curEl.classList.remove('on'); });
   activeBg = next;
-  document.body.classList.toggle('light', t[1]);
-  document.documentElement.style.setProperty('--glow', t[3]);
-  document.querySelector('meta[name="theme-color"]').setAttribute('content', t[2]);
-  if(state.wx) setTimeout(renderChart, 50);
+  document.body.classList.toggle('light', th[1]);
+  document.documentElement.style.setProperty('--glow', th[3]);
+  document.querySelector('meta[name="theme-color"]').setAttribute('content', th[2]);
+  if(radar.map) radarBase();
 }
 
-/* ================= Indices ================= */
-function uvInfo(u){
-  if(u < 3) return ['Χαμηλός', '#3ddc84', 'Δεν απαιτείται προστασία'];
-  if(u < 6) return ['Μέτριος', '#ffd23f', 'Γυαλιά ηλίου & αντηλιακό'];
-  if(u < 8) return ['Υψηλός', '#ff9233', 'Αποφύγετε τον ήλιο 12:00–16:00'];
-  if(u < 11) return ['Πολύ υψηλός', '#ff4d4d', 'Περιορίστε την έκθεση'];
-  return ['Ακραίος', '#b46bff', 'Μείνετε στη σκιά'];
-}
-const AQI_LEVELS = [
-  [20, 'Καλή', '#3ddc84', 'Η ποιότητα του αέρα είναι εξαιρετική. Ιδανικές συνθήκες για δραστηριότητες έξω.'],
-  [40, 'Ικανοποιητική', '#a3e048', 'Καλή ποιότητα αέρα. Απολαύστε κανονικά τις υπαίθριες δραστηριότητες.'],
-  [60, 'Μέτρια', '#ffd23f', 'Οι ευαίσθητες ομάδες καλό είναι να περιορίσουν την έντονη άσκηση έξω.'],
-  [80, 'Κακή', '#ff9233', 'Περιορίστε την παρατεταμένη ή έντονη δραστηριότητα σε εξωτερικούς χώρους.'],
-  [100, 'Πολύ κακή', '#ff4d4d', 'Αποφύγετε την έντονη δραστηριότητα έξω. Κλειστά παράθυρα.'],
-  [Infinity, 'Εξαιρετικά κακή', '#b46bff', 'Παραμείνετε σε εσωτερικούς χώρους όσο είναι δυνατόν.']
-];
-const aqiInfo = v => AQI_LEVELS.find(l => v <= l[0]);
-// EAQI band thresholds per pollutant (µg/m³)
+/* =====================================================================
+   Indices
+   ===================================================================== */
+const UV_COLORS = ['#3ddc84','#ffd23f','#ff9233','#ff4d4d','#b46bff'];
+function uvIdx(u){ return u < 3 ? 0 : u < 6 ? 1 : u < 8 ? 2 : u < 11 ? 3 : 4; }
+const AQI_MAX = [20,40,60,80,100,Infinity];
+const AQI_COLORS = ['#3ddc84','#a3e048','#ffd23f','#ff9233','#ff4d4d','#b46bff'];
+const aqiIdx = v => AQI_MAX.findIndex(m => v <= m);
 const POLLUTANTS = [
-  ['pm2_5', 'PM2.5', 'fa-braille', [10,20,25,50,75]],
-  ['pm10', 'PM10', 'fa-smog', [20,40,50,100,150]],
-  ['nitrogen_dioxide', 'NO₂', 'fa-car', [40,90,120,230,340]],
-  ['ozone', 'O₃', 'fa-sun-plant-wilt', [50,100,130,240,380]],
-  ['sulphur_dioxide', 'SO₂', 'fa-industry', [100,200,350,500,750]],
-  ['carbon_monoxide', 'CO', 'fa-fire', null]
+  ['pm2_5','PM2.5','fa-braille',[10,20,25,50,75]],
+  ['pm10','PM10','fa-smog',[20,40,50,100,150]],
+  ['nitrogen_dioxide','NO₂','fa-car',[40,90,120,230,340]],
+  ['ozone','O₃','fa-sun-plant-wilt',[50,100,130,240,380]],
+  ['sulphur_dioxide','SO₂','fa-industry',[100,200,350,500,750]],
+  ['carbon_monoxide','CO','fa-fire',null]
 ];
 const bandColor = (v, th) => {
-  if(!th || v == null) return 'rgba(255,255,255,.5)';
-  const i = th.findIndex(t => v <= t);
-  return AQI_LEVELS[i === -1 ? 5 : i][2];
+  if(!th || !num(v)) return 'rgba(255,255,255,.5)';
+  const i = th.findIndex(x => v <= x);
+  return AQI_COLORS[i === -1 ? 5 : i];
 };
-const COMPASS = ['Β','ΒΑ','Α','ΝΑ','Ν','ΝΔ','Δ','ΒΔ'];
-const compass = d => COMPASS[Math.round(((d % 360) + 360) % 360 / 45) % 8];
+const compass = d => t('compass')[Math.round((((d % 360) + 360) % 360) / 45) % 8];
 function beaufort(kmh){
-  const t = [1,6,12,20,29,39,50,62,75,89,103,118];
-  const i = t.findIndex(x => kmh < x);
+  const lim = [1,6,12,20,29,39,50,62,75,89,103,118];
+  const i = lim.findIndex(x => kmh < x);
   return i === -1 ? 12 : i;
 }
+function seaStateIdx(h){ return h < 0.1 ? 0 : h < 0.5 ? 1 : h < 1.25 ? 2 : h < 2.5 ? 3 : 4; }
+const SEA_COLORS = ['#3ddc84','#a3e048','#ffd23f','#ff9233','#ff4d4d'];
 
-/* ================= State ================= */
-const DEFAULT_LOC = {lat:37.9838, lon:23.7275, name:'Αθήνα', sub:'Αττική, Ελλάδα', cc:'GR'};
-const state = {loc:null, wx:null, aq:null, mode:'daily', chart:null};
+/* =====================================================================
+   State & location
+   ===================================================================== */
+const DEFAULT_LOC = {lat:37.9838, lon:23.7275, def:true, cc:'GR'};
+const state = {loc:null, wx:null, aq:null, sea:null, mode:'daily', chart:null, view:'now', reqId:0};
+const gpsName = loc => loc.names && (loc.names[lang] || loc.names.el || loc.names.en);
+function locName(loc){
+  if(loc.def) return t('athens');
+  if(loc.gps){ const n = gpsName(loc); return n ? n.name : t('myLocation'); }
+  return loc.name || '—';
+}
+function locSubText(loc){
+  if(loc.def) return t('attica');
+  if(loc.gps){ const n = gpsName(loc); return (n && n.sub) || t('currentPos'); }
+  return loc.sub || '';
+}
+const TIME_OPTS = {hour:'2-digit', minute:'2-digit', hourCycle:'h23'};
 
-/* ================= Data loading ================= */
+/* =====================================================================
+   Data loading
+   ===================================================================== */
 async function loadWeather(loc){
   state.loc = loc;
   store.set('wx_loc', loc);
-  $('#locName').textContent = loc.name;
+  renderHeader();
   loading(true);
+  const myReq = ++state.reqId;
   const lat = loc.lat.toFixed(4), lon = loc.lon.toFixed(4);
-  const wxUrl = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat + '&longitude=' + lon +
+  const base = 'latitude=' + lat + '&longitude=' + lon;
+  const wxUrl = 'https://api.open-meteo.com/v1/forecast?' + base +
     '&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_direction_10m,wind_gusts_10m,uv_index,pressure_msl,dew_point_2m' +
+    '&minutely_15=precipitation&forecast_minutely_15=12' +
     '&hourly=temperature_2m,precipitation_probability,weather_code,is_day' +
-    '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max,precipitation_sum' +
+    '&daily=weather_code,temperature_2m_max,temperature_2m_min,sunrise,sunset,uv_index_max,precipitation_probability_max' +
     '&timezone=auto&forecast_days=5&wind_speed_unit=kmh';
-  const aqUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?latitude=' + lat + '&longitude=' + lon +
+  const aqUrl = 'https://air-quality-api.open-meteo.com/v1/air-quality?' + base +
     '&current=european_aqi,pm10,pm2_5,nitrogen_dioxide,ozone,sulphur_dioxide,carbon_monoxide&timezone=auto';
+  const seaUrl = 'https://marine-api.open-meteo.com/v1/marine?' + base +
+    '&current=wave_height,wave_direction,wave_period,sea_surface_temperature&daily=wave_height_max&timezone=auto&forecast_days=1';
   try{
-    const [wx, aq] = await Promise.all([getJSON(wxUrl), getJSON(aqUrl).catch(() => null)]);
-    state.wx = wx; state.aq = aq;
+    const [wx, aq, sea] = await Promise.all([
+      getJSON(wxUrl),
+      getJSON(aqUrl).catch(() => null),
+      getJSON(seaUrl).catch(() => null)
+    ]);
+    if(myReq !== state.reqId) return;          // a newer request superseded this one
+    if(!wx || !wx.current || !wx.daily) throw new Error('bad payload');
+    state.wx = wx; state.aq = aq; state.sea = sea;
     renderAll();
   }catch(e){
-    console.error(e);
-    toast('Αδυναμία λήψης δεδομένων. Ελέγξτε τη σύνδεσή σας.');
+    if(myReq === state.reqId){ console.error(e); toast(t('fetchErr')); }
   }finally{
-    loading(false);
+    if(myReq === state.reqId) loading(false);
   }
 }
 
+// Area name for GPS positions. BigDataCloud's client-side API may only be called with the device's
+// live position, so both languages are fetched right away and kept with the location.
+async function reverseOne(lat, lon, l){
+  try{
+    const d = await getJSON('https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=' + lat.toFixed(5) + '&longitude=' + lon.toFixed(5) + '&localityLanguage=' + l, 10000);
+    const name = String(d.locality || d.city || '').trim();
+    if(!name) return null;
+    const sub = (d.city && d.city !== name) ? d.city : (d.principalSubdivision || d.countryName || '');
+    return {name, sub, cc:d.countryCode || null};
+  }catch(e){ return null; }
+}
+async function reverseNames(lat, lon){
+  const [el, en] = await Promise.all([reverseOne(lat, lon, 'el'), reverseOne(lat, lon, 'en')]);
+  if(!el && !en) return null;
+  const names = {};
+  if(el) names.el = {name:el.name, sub:el.sub};
+  if(en) names.en = {name:en.name, sub:en.sub};
+  return {names, cc:(el || en).cc};
+}
+
 function locate(){
-  if(!('geolocation' in navigator)){ toast('Ο εντοπισμός δεν υποστηρίζεται σε αυτή τη συσκευή.'); return; }
+  if(!('geolocation' in navigator)){ toast(t('geoUnsupported')); return; }
   $('#btnLocate').classList.add('spin');
   navigator.geolocation.getCurrentPosition(pos => {
     $('#btnLocate').classList.remove('spin');
-    const {latitude, longitude} = pos.coords;
-    loadWeather({lat:latitude, lon:longitude, name:'Η τοποθεσία μου', sub:'Τρέχουσα θέση', cc:null, gps:true});
+    useGPS(pos.coords.latitude, pos.coords.longitude, state.loc);
     switchView('now');
   }, err => {
     $('#btnLocate').classList.remove('spin');
-    toast(err.code === 1 ? 'Δεν δόθηκε άδεια εντοπισμού θέσης.' : 'Ο εντοπισμός απέτυχε. Δοκιμάστε την αναζήτηση.');
+    toast(err && err.code === 1 ? t('geoDenied') : t('geoFailed'));
   }, {enableHighAccuracy:true, timeout:12000, maximumAge:300000});
 }
+function useGPS(lat, lon, prev){
+  const loc = {lat, lon, gps:true, cc:null};
+  // keep the previous name while the new one loads if we have barely moved
+  if(prev && prev.names && haversineKm(lat, lon, prev.lat, prev.lon) < 1) loc.names = prev.names;
+  loadWeather(loc);
+  reverseNames(lat, lon).then(r => {
+    if(!r || state.loc !== loc) return;      // user moved on to another place
+    Object.assign(loc, r);
+    store.set('wx_loc', loc);
+    renderHeader();
+  });
+}
 
-/* ================= Rendering ================= */
+/* =====================================================================
+   Rendering
+   ===================================================================== */
+function renderHeader(){
+  const loc = state.loc; if(!loc) return;
+  $('#locName').textContent = locName(loc);
+  $('#locIcon').className = 'fa-solid ' + (loc.gps ? 'fa-location-arrow' : 'fa-location-dot');
+  let sub = locSubText(loc);
+  if(state.wx && state.wx.timezone){
+    try{
+      const lt = new Date().toLocaleString(t('locale'), Object.assign({timeZone:state.wx.timezone, weekday:'long', day:'numeric', month:'long'}, TIME_OPTS));
+      sub = (sub ? sub + ' · ' : '') + lt;
+    }catch(e){}
+  }
+  $('#locSub').textContent = sub || ' ';
+}
+
 function renderAll(){
   const wx = state.wx, c = wx.current, d = wx.daily;
   const isDay = c.is_day === 1;
   applyTheme(themeKey(c.weather_code, isDay));
-
-  // Header
-  const loc = state.loc;
-  $('#locName').textContent = loc.name;
-  const localTime = new Date().toLocaleString('el-GR', {timeZone:wx.timezone, weekday:'long', day:'numeric', month:'long', hour:'2-digit', minute:'2-digit'});
-  $('#locSub').textContent = (loc.sub ? loc.sub + ' · ' : '') + localTime;
+  fxSet(c.weather_code, isDay);
+  renderHeader();
 
   // Hero
   $('#heroIcon').className = 'fa-solid ' + wIcon(c.weather_code, isDay) + ' big-icon';
   $('#temp').textContent = r0(c.temperature_2m);
-  $('#desc').textContent = wmo(c.weather_code)[0];
+  $('#desc').textContent = wDesc(c.weather_code);
   $('#feels').textContent = r0(c.apparent_temperature) + '°';
   $('#tmax').textContent = r0(d.temperature_2m_max[0]) + '°';
   $('#tmin').textContent = r0(d.temperature_2m_min[0]) + '°';
 
+  renderStrip();
+  renderRain();
+
   // Humidity
   $('#hum').innerHTML = r0(c.relative_humidity_2m) + '<small>%</small>';
-  $('#humBar').style.width = Math.min(100, c.relative_humidity_2m || 0) + '%';
-  $('#humSub').textContent = 'Σημείο δρόσου ' + r0(c.dew_point_2m) + '°';
+  $('#humBar').style.width = Math.max(0, Math.min(100, c.relative_humidity_2m || 0)) + '%';
+  $('#humSub').textContent = t('dewPoint', {v:r0(c.dew_point_2m)});
 
-  // Wind (direction = where wind comes FROM; arrow points where it blows TO)
+  // Wind: direction is where it comes FROM; the arrow shows where it blows TO.
+  // fa-location-arrow points north-east (45°) by default.
   $('#wind').innerHTML = r0(c.wind_speed_10m) + '<small>km/h</small>';
-  $('#windArrow').style.transform = 'rotate(' + ((c.wind_direction_10m + 180) - 45) + 'deg)';
-  $('#windSub').textContent = compass(c.wind_direction_10m) + ' · ' + beaufort(c.wind_speed_10m) + ' Bf · ριπές ' + r0(c.wind_gusts_10m);
+  $('#windArrow').style.transform = 'rotate(' + ((num(c.wind_direction_10m) ? c.wind_direction_10m : 0) + 135) + 'deg)';
+  $('#windSub').textContent = compass(c.wind_direction_10m || 0) + ' · ' + beaufort(c.wind_speed_10m || 0) + ' Bf · ' + t('gusts') + ' ' + r0(c.wind_gusts_10m);
 
   // UV
-  const uvNow = c.uv_index != null ? c.uv_index : (d.uv_index_max[0] || 0);
-  const ui = uvInfo(uvNow);
-  $('#uv').innerHTML = (Math.round(uvNow * 10) / 10) + '<small>/ μέγ. ' + r0(d.uv_index_max[0]) + '</small>';
+  const uvNow = num(c.uv_index) ? c.uv_index : 0;
+  const ui = uvIdx(uvNow);
+  $('#uv').innerHTML = fmt1(Math.round(uvNow * 10) / 10) + '<small>/ ' + t('uvMax') + ' ' + r0(d.uv_index_max[0]) + '</small>';
   $('#uvDot').style.left = Math.min(100, uvNow / 11 * 100) + '%';
-  const ub = $('#uvBadge');
-  ub.textContent = ui[0]; ub.style.background = ui[1]; ub.title = ui[2];
+  const ub = $('#uvBadge'); ub.textContent = t('uvL')[ui]; ub.style.background = UV_COLORS[ui];
 
   // Elevation & pressure
-  $('#elev').innerHTML = r0(wx.elevation) + '<small>μ</small>';
-  $('#coords').textContent = Math.abs(wx.latitude).toFixed(2) + '°' + (wx.latitude >= 0 ? 'Β' : 'Ν') + ', ' + Math.abs(wx.longitude).toFixed(2) + '°' + (wx.longitude >= 0 ? 'Α' : 'Δ');
+  $('#elev').innerHTML = r0(wx.elevation) + '<small>' + t('meters') + '</small>';
+  const ns = lang === 'en' ? ['N','S','E','W'] : ['Β','Ν','Α','Δ'];
+  $('#coords').textContent = Math.abs(wx.latitude).toFixed(2) + '°' + (wx.latitude >= 0 ? ns[0] : ns[1]) + ', ' + Math.abs(wx.longitude).toFixed(2) + '°' + (wx.longitude >= 0 ? ns[2] : ns[3]);
   $('#press').innerHTML = r0(c.pressure_msl) + '<small>hPa</small>';
-  $('#pressSub').textContent = c.pressure_msl < 1009 ? 'Χαμηλή πίεση' : c.pressure_msl > 1022 ? 'Υψηλή πίεση' : 'Κανονική';
+  $('#pressSub').textContent = c.pressure_msl < 1009 ? t('pressLow') : c.pressure_msl > 1022 ? t('pressHigh') : t('pressNormal');
 
-  // Sun
+  renderSea();
+  renderSun();
+  $('#updated').innerHTML = esc(t('updated', {t:hhmm(c.time)})) + ' <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>';
+
+  renderAir();
+  renderDays();
+  if(state.view === 'forecast') renderChart();
+  if(radar.map) radarCenter();
+}
+
+function renderStrip(){
+  const wx = state.wx, h = wx.hourly;
+  if(!h || !h.time){ $('#strip').innerHTML = ''; return; }
+  const curHour = wx.current.time.slice(0, 13);
+  let s = h.time.findIndex(x => x.slice(0, 13) === curHour);
+  if(s < 0) s = 0;
+  const out = [];
+  for(let i = s; i < Math.min(s + 24, h.time.length); i++){
+    const isNow = i === s;
+    const hr = h.time[i].slice(11, 13);
+    const label = isNow ? t('nowLabel') : (hr === '00' ? dayShort(h.time[i]) : hr);
+    const pp = h.precipitation_probability ? h.precipitation_probability[i] : null;
+    const temp = isNow ? wx.current.temperature_2m : h.temperature_2m[i];
+    const code = isNow ? wx.current.weather_code : h.weather_code[i];
+    const day = isNow ? wx.current.is_day === 1 : (h.is_day ? h.is_day[i] === 1 : true);
+    out.push('<div class="h' + (isNow ? ' now' : '') + '"><div class="ht">' + esc(label) + '</div>' +
+      '<i class="fa-solid ' + wIcon(code, day) + '"></i>' +
+      '<div class="hv">' + r0(temp) + '°</div>' +
+      '<div class="hp">' + (num(pp) && pp >= 10 ? pp + '%' : '') + '</div></div>');
+  }
+  $('#strip').innerHTML = out.join('');
+  $('#strip').scrollLeft = 0;
+}
+
+function rainInfo(){
+  const wx = state.wx, m = wx.minutely_15;
+  if(!m || !Array.isArray(m.time) || !Array.isArray(m.precipitation)) return null;
+  const cur = wx.current.time;
+  // slot that contains "now": the last slot that starts at or before the current time
+  let s = -1;
+  for(let i = 0; i < m.time.length; i++){ if(m.time[i] <= cur) s = i; else break; }
+  if(s < 0) s = 0;
+  const vals = m.precipitation.slice(s, s + 8).map(v => num(v) ? v : 0);
+  if(vals.length < 4) return null;
+  const WET = 0.1;
+  const wet = vals.map(v => v >= WET);
+  // precipitation includes snow: word it as snow when it is snowing or the next hours bring snow
+  const h = wx.hourly, i0 = h && h.time ? Math.max(0, h.time.findIndex(x => x.slice(0, 13) === cur.slice(0, 13))) : -1;
+  const snowy = wmo(wx.current.weather_code)[4] === 'snow' ||
+    (i0 >= 0 && h.weather_code && [h.weather_code[i0 + 1], h.weather_code[i0 + 2]].some(c => wmo(c)[4] === 'snow'));
+  const P = snowy ? 'snow' : 'rain';
+  let msg, icon = snowy ? 'fa-snowflake' : 'fa-cloud-rain';
+  if(wet[0]){
+    const stop = wet.indexOf(false);
+    msg = stop === -1 ? t(P + 'NowCont') : t(P + 'NowStops', {m:stop * 15});
+  }else{
+    const start = wet.indexOf(true);
+    if(start === -1){ msg = t(P + 'None'); icon = 'fa-umbrella-beach'; }
+    else msg = t(P + 'Starts', {m:start * 15});
+  }
+  return {vals, wet, msg, icon, title:t(P + 'Title')};
+}
+function renderRain(){
+  const r = rainInfo(), card = $('#rainCard');
+  if(!r){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  $('#rainTitle').textContent = r.title;
+  $('#rainMsg').innerHTML = '<i class="fa-solid ' + r.icon + '"></i><span>' + esc(r.msg) + '</span>';
+  // 1 mm in 15 minutes is heavy rain -> full bar
+  $('#rainBars').innerHTML = r.vals.map((v, i) =>
+    '<div class="' + (r.wet[i] ? '' : 'dry') + '" style="height:' + (r.wet[i] ? Math.max(12, Math.min(100, v * 100)) : 6) + '%" title="' + fmt1(v) + ' mm"></div>'
+  ).join('');
+}
+
+function renderSea(){
+  const m = state.sea, card = $('#seaCard');
+  const c = m && m.current;
+  const valid = c && (num(c.wave_height) || num(c.sea_surface_temperature));
+  // Marine API snaps to the nearest sea cell; ignore it when that cell is far away (inland locations)
+  const near = valid && num(m.latitude) && num(m.longitude) && haversineKm(state.loc.lat, state.loc.lon, m.latitude, m.longitude) <= 40;
+  if(!valid || !near){ card.classList.add('hidden'); return; }
+  card.classList.remove('hidden');
+  $('#seaT').innerHTML = num(c.sea_surface_temperature) ? fmt1(Math.round(c.sea_surface_temperature * 10) / 10) + '<small>°C</small>' : '--';
+  $('#seaW').innerHTML = num(c.wave_height) ? fmt1(c.wave_height) + '<small>m</small>' +
+    (num(c.wave_direction) ? '<i class="fa-solid fa-arrow-up wd" style="transform:rotate(' + (c.wave_direction + 180) + 'deg)"></i>' : '') : '--';
+  $('#seaP').innerHTML = num(c.wave_period) ? fmt1(c.wave_period) + '<small>s</small>' : '--';
+  const b = $('#seaBadge');
+  if(num(c.wave_height)){
+    const i = seaStateIdx(c.wave_height);
+    b.textContent = t('seaStates')[i]; b.style.background = SEA_COLORS[i]; b.classList.remove('hidden');
+  }else b.classList.add('hidden');
+  const mx = m.daily && m.daily.wave_height_max ? m.daily.wave_height_max[0] : null;
+  $('#seaMax').textContent = num(mx) ? t('waveMax', {v:fmt1(mx)}) : '';
+}
+
+function renderSun(){
+  const wx = state.wx, c = wx.current, d = wx.daily, isDay = c.is_day === 1;
   const sr = d.sunrise[0], ss = d.sunset[0];
   $('#sunrise').textContent = hhmm(sr);
   $('#sunset').textContent = hhmm(ss);
+  // All three strings are local wall-clock times of the same zone, so parsing them alike keeps differences correct
   const srT = new Date(sr).getTime(), ssT = new Date(ss).getTime(), nowT = new Date(c.time).getTime();
+  if(!num(srT) || !num(ssT) || ssT <= srT){ $('#dayLen').textContent = '—'; return; }
   const lenMin = Math.round((ssT - srT) / 60000);
   const f = Math.max(0, Math.min(1, (nowT - srT) / (ssT - srT)));
   const th = Math.PI * (1 - f);
   const x = 150 + 130 * Math.cos(th), y = 92 - 80 * Math.sin(th);
   ['#sunDot', '#sunDotGlow'].forEach(s => { $(s).setAttribute('cx', x.toFixed(1)); $(s).setAttribute('cy', y.toFixed(1)); });
   $('#sunDot').setAttribute('fill', isDay ? '#ffc94a' : '#9aa3c7');
-  let meta = 'Διάρκεια ημέρας ' + Math.floor(lenMin / 60) + ' ώ ' + (lenMin % 60) + ' λ';
-  if(isDay && nowT < ssT){ const left = Math.round((ssT - nowT) / 60000); meta += ' · απομένουν ' + Math.floor(left / 60) + ' ώ ' + (left % 60) + ' λ φωτός'; }
+  let meta = t('dayLen', {h:Math.floor(lenMin / 60), m:lenMin % 60});
+  if(isDay && nowT < ssT && nowT >= srT){
+    const left = Math.round((ssT - nowT) / 60000);
+    meta += t('dayLeft', {h:Math.floor(left / 60), m:left % 60});
+  }
   $('#dayLen').textContent = meta;
-
-  $('#updated').innerHTML = 'Ενημέρωση ' + hhmm(c.time) + ' (τοπική ώρα) · Δεδομένα <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a>';
-
-  renderAir();
-  renderDays();
-  renderChart();
 }
 
 function renderAir(){
   const aq = state.aq && state.aq.current;
-  if(!aq || aq.european_aqi == null){
-    $('#aqiMini').textContent = 'N/A';
-    $('#aqiMiniBadge').textContent = 'Μη διαθέσιμο'; $('#aqiMiniBadge').style.background = '#ccc';
-    $('#aqiVal').textContent = '--'; $('#aqiLabel').textContent = 'Μη διαθέσιμα δεδομένα';
-    $('#aqiAdvice').textContent = 'Δεν υπάρχουν δεδομένα ποιότητας αέρα για αυτή την περιοχή.';
+  if(!aq || !num(aq.european_aqi)){
+    $('#aqiMini').textContent = '--';
+    const mb = $('#aqiMiniBadge'); mb.textContent = t('na'); mb.style.background = '#ccc';
+    $('#aqiVal').textContent = '--'; $('#aqiLabel').textContent = t('aqiNoTitle'); $('#aqiLabel').style.color = '';
+    $('#aqiAdvice').textContent = t('aqiNoData');
+    $('#aqiRing').style.strokeDashoffset = 339.3;
     $('#pollGrid').innerHTML = '';
     return;
   }
-  const v = Math.round(aq.european_aqi), info = aqiInfo(v);
+  const v = Math.round(aq.european_aqi), i = aqiIdx(v);
   $('#aqiMini').innerHTML = v + '<small>EAQI</small>';
-  const mb = $('#aqiMiniBadge'); mb.textContent = info[1]; mb.style.background = info[2];
+  const mb = $('#aqiMiniBadge'); mb.textContent = t('aqiL')[i]; mb.style.background = AQI_COLORS[i];
   $('#aqiVal').textContent = v;
-  $('#aqiLabel').textContent = info[1];
-  $('#aqiLabel').style.color = info[2];
-  $('#aqiAdvice').textContent = info[3];
+  $('#aqiLabel').textContent = t('aqiL')[i];
+  $('#aqiLabel').style.color = AQI_COLORS[i];
+  $('#aqiAdvice').textContent = t('aqiA')[i];
   const ring = $('#aqiRing'), C = 339.3;
-  ring.setAttribute('stroke', info[2]);
+  ring.setAttribute('stroke', AQI_COLORS[i]);
   ring.style.strokeDashoffset = C - C * Math.min(1, v / 100);
-
   $('#pollGrid').innerHTML = POLLUTANTS.map(p => {
     const val = aq[p[0]];
-    const shown = val == null ? '--' : (p[0] === 'carbon_monoxide' ? Math.round(val) : (Math.round(val * 10) / 10));
+    const shown = !num(val) ? '--' : (p[0] === 'carbon_monoxide' ? Math.round(val) : fmt1(Math.round(val * 10) / 10));
     return '<div class="tile glass"><div class="t-head"><i class="fa-solid ' + p[2] + '"></i>' + p[1] +
       '<span class="dot" style="background:' + bandColor(val, p[3]) + '"></span></div>' +
       '<div class="t-val">' + shown + '<small>µg/m³</small></div></div>';
   }).join('');
 }
 
+const dayShort = iso => new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString(t('locale'), {weekday:'short'}).replace('.', '');
+const dayDate = iso => new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString(t('locale'), {day:'numeric', month:'short'});
+
 function renderDays(){
   const d = state.wx.daily;
-  const gMin = Math.min(...d.temperature_2m_min), gMax = Math.max(...d.temperature_2m_max);
-  const span = Math.max(1, gMax - gMin);
-  $('#dayList').innerHTML = d.time.map((t, i) => {
+  const mins = d.temperature_2m_min.filter(num), maxs = d.temperature_2m_max.filter(num);
+  if(!mins.length || !maxs.length){ $('#dayList').innerHTML = ''; return; }
+  const gMin = Math.min(...mins), gMax = Math.max(...maxs), span = Math.max(1, gMax - gMin);
+  $('#dayList').innerHTML = d.time.map((day, i) => {
     const lo = d.temperature_2m_min[i], hi = d.temperature_2m_max[i];
     const left = (lo - gMin) / span * 100, width = (hi - lo) / span * 100;
-    const pp = d.precipitation_probability_max[i];
+    const pp = d.precipitation_probability_max ? d.precipitation_probability_max[i] : null;
     return '<div class="day">' +
-      '<div class="dn">' + (i === 0 ? 'Σήμερα' : esc(dayShort(t))) + '<small>' + esc(dayDate(t)) + '</small></div>' +
-      '<div class="di"><i class="fa-solid ' + wIcon(d.weather_code[i], true) + '" title="' + esc(wmo(d.weather_code[i])[0]) + '"></i></div>' +
-      '<div class="dp">' + (pp != null ? '<i class="fa-solid fa-droplet"></i> ' + pp + '%' : '') + '</div>' +
+      '<div class="dn">' + (i === 0 ? esc(t('today')) : esc(dayShort(day))) + '<small>' + esc(dayDate(day)) + '</small></div>' +
+      '<div class="di"><i class="fa-solid ' + wIcon(d.weather_code[i], true) + '" title="' + esc(wDesc(d.weather_code[i])) + '"></i></div>' +
+      '<div class="dp">' + (num(pp) ? '<i class="fa-solid fa-droplet"></i> ' + pp + '%' : '') + '</div>' +
       '<div class="range"><span class="lo">' + r0(lo) + '°</span><div class="track"><span style="left:' + left + '%;width:' + Math.max(width, 4) + '%"></span></div><span class="hi">' + r0(hi) + '°</span></div>' +
       '</div>';
   }).join('');
@@ -669,7 +1085,6 @@ function renderChart(){
   const gridCol = light ? 'rgba(22,32,44,.08)' : 'rgba(255,255,255,.12)';
   const barCol = light ? 'rgba(31,111,209,.28)' : 'rgba(140,190,255,.35)';
   Chart.defaults.font.family = "'Inter', system-ui, sans-serif";
-
   const inner = $('#chartInner'), scroller = $('#chartScroll');
   const fill = color => ctx => {
     const ch = ctx.chart, a = ch.chartArea;
@@ -679,28 +1094,26 @@ function renderChart(){
     return g;
   };
   let labels, datasets;
-
   if(state.mode === 'daily'){
     inner.style.width = '100%';
-    $('#chartHint').textContent = 'Μέγιστη / ελάχιστη θερμοκρασία και πιθανότητα βροχής ανά ημέρα';
+    $('#chartHint').textContent = t('hintDaily');
     const d = wx.daily;
-    labels = d.time.map((t, i) => i === 0 ? 'Σήμερα' : dayShort(t));
+    labels = d.time.map((x, i) => i === 0 ? t('today') : dayShort(x));
     datasets = [
-      {type:'line', label:'Μέγιστη', data:d.temperature_2m_max, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#ffb547', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:1},
-      {type:'line', label:'Ελάχιστη', data:d.temperature_2m_min, borderColor:'#5fb8ff', backgroundColor:fill('#5fb8ff'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#5fb8ff', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:2},
-      {type:'bar', label:'Πιθ. βροχής', data:d.precipitation_probability_max, backgroundColor:barCol, borderRadius:8, barPercentage:.45, yAxisID:'y1', order:3}
+      {type:'line', label:t('tMax'), data:d.temperature_2m_max, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#ffb547', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:1},
+      {type:'line', label:t('tMin'), data:d.temperature_2m_min, borderColor:'#5fb8ff', backgroundColor:fill('#5fb8ff'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#5fb8ff', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:2},
+      {type:'bar', label:t('rainProb'), data:d.precipitation_probability_max, backgroundColor:barCol, borderRadius:8, barPercentage:.45, yAxisID:'y1', order:3}
     ];
-  } else {
+  }else{
     const h = wx.hourly, n = h.time.length;
     inner.style.width = Math.max(n * 18, scroller.clientWidth) + 'px';
-    $('#chartHint').textContent = 'Σύρετε οριζόντια · θερμοκρασία και πιθανότητα βροχής ανά ώρα';
-    labels = h.time.map(t => { const hr = +t.slice(11, 13); return hr === 0 ? dayShort(t) : t.slice(11, 16); });
+    $('#chartHint').textContent = t('hintHourly');
+    labels = h.time.map(x => x.slice(11, 13) === '00' ? dayShort(x) : x.slice(11, 16));
     datasets = [
-      {type:'line', label:'Θερμοκρασία', data:h.temperature_2m, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.4, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, yAxisID:'y', order:1},
-      {type:'bar', label:'Πιθ. βροχής', data:h.precipitation_probability, backgroundColor:barCol, borderRadius:4, barPercentage:.8, categoryPercentage:.9, yAxisID:'y1', order:2}
+      {type:'line', label:t('tTemp'), data:h.temperature_2m, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.4, borderWidth:2.5, pointRadius:0, pointHoverRadius:5, yAxisID:'y', order:1},
+      {type:'bar', label:t('rainProb'), data:h.precipitation_probability, backgroundColor:barCol, borderRadius:4, barPercentage:.8, categoryPercentage:.9, yAxisID:'y1', order:2}
     ];
   }
-
   if(state.chart) state.chart.destroy();
   state.chart = new Chart($('#chart').getContext('2d'), {
     data:{labels, datasets},
@@ -711,7 +1124,7 @@ function renderChart(){
       layout:{padding:{top:4, right:2}},
       plugins:{
         legend:{labels:{usePointStyle:true, pointStyle:'circle', boxWidth:7, boxHeight:7, color:ink, padding:14, font:{size:11, weight:'600'}}},
-        tooltip:{backgroundColor:'rgba(15,20,35,.88)', titleColor:'#fff', bodyColor:'#fff', padding:10, cornerRadius:12, displayColors:true, boxPadding:4,
+        tooltip:{backgroundColor:'rgba(15,20,35,.88)', titleColor:'#fff', bodyColor:'#fff', padding:10, cornerRadius:12, boxPadding:4,
           callbacks:{label:c => c.dataset.yAxisID === 'y1' ? ' ' + c.dataset.label + ': ' + (c.raw == null ? '--' : c.raw) + '%' : ' ' + c.dataset.label + ': ' + Math.round(c.raw) + '°C'}}
       },
       scales:{
@@ -723,13 +1136,280 @@ function renderChart(){
   });
 }
 
-/* ================= Search (Open-Meteo Geocoding) ================= */
-let qTimer, qSeq = 0;
+/* =====================================================================
+   Rain radar (RainViewer free API: past 2 h, 10-min frames, max zoom 7,
+   colour scheme 2 = Universal Blue, 100 requests / min / IP)
+   ===================================================================== */
+const radar = {map:null, base:null, baseKey:null, marker:null, frames:[], host:'', layers:{}, idx:0, timer:null, loadedAt:0, loading:false};
+const LEAFLET_CSS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+const LEAFLET_JS = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+let leafletReady = null;
+function ensureLeaflet(){
+  if(window.L && window.L.map) return Promise.resolve();
+  if(!leafletReady) leafletReady = Promise.all([loadCSS(LEAFLET_CSS).catch(() => {}), loadJS(LEAFLET_JS)]);
+  return leafletReady;
+}
+async function radarOpen(){
+  try{ await ensureLeaflet(); }
+  catch(e){ leafletReady = null; radarMsg(t('radarErr')); return; }
+  if(state.view !== 'radar') return;
+  const loc = state.loc || DEFAULT_LOC;
+  if(!radar.map){
+    radar.map = L.map('radarMap', {zoomControl:false, minZoom:3, maxZoom:10, worldCopyJump:true, attributionControl:true})
+      .setView([loc.lat, loc.lon], 7);
+    L.control.zoom({position:'topright'}).addTo(radar.map);
+    radar.map.attributionControl.setPrefix(false);
+  }
+  radarBase();
+  radarCenter();
+  setTimeout(() => radar.map && radar.map.invalidateSize(), 80);
+  if(Date.now() - radar.loadedAt > 5 * 60 * 1000) await radarLoadFrames();
+  else radarShow(radar.idx);
+}
+function radarBase(){
+  if(!radar.map) return;
+  const key = document.body.classList.contains('light') ? 'light_all' : 'dark_all';
+  if(key === radar.baseKey) return;
+  if(radar.base) radar.map.removeLayer(radar.base);
+  radar.base = L.tileLayer('https://{s}.basemaps.cartocdn.com/' + key + '/{z}/{x}/{y}{r}.png', {
+    subdomains:'abcd', maxZoom:19,
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>'
+  }).addTo(radar.map);
+  radar.base.bringToBack();
+  radar.baseKey = key;
+}
+function radarCenter(){
+  if(!radar.map || !state.loc) return;
+  const ll = [state.loc.lat, state.loc.lon];
+  if(!radar.marker){
+    radar.marker = L.marker(ll, {icon:L.divIcon({className:'', html:'<div class="me-dot"></div>', iconSize:[16,16], iconAnchor:[8,8]}), interactive:false, keyboard:false}).addTo(radar.map);
+  }else radar.marker.setLatLng(ll);
+  radar.map.setView(ll, radar.map.getZoom() || 7, {animate:false});
+}
+async function radarLoadFrames(){
+  if(radar.loading) return;
+  radar.loading = true;
+  try{
+    const d = await getJSON('https://api.rainviewer.com/public/weather-maps.json', 12000);
+    const frames = (d && d.radar && Array.isArray(d.radar.past)) ? d.radar.past.filter(f => f && f.path && num(f.time)) : [];
+    if(!d.host || !frames.length) throw new Error('no frames');
+    Object.values(radar.layers).forEach(l => { if(radar.map.hasLayer(l)) radar.map.removeLayer(l); });
+    radar.layers = {};
+    radar.host = d.host; radar.frames = frames; radar.loadedAt = Date.now();
+    const sl = $('#radarSlider'); sl.max = frames.length - 1;
+    radarShow(frames.length - 1);
+    radarMsg(t('radarHint'));
+  }catch(e){
+    radarMsg(t('radarErr'));
+  }finally{ radar.loading = false; }
+}
+function frameLayer(i){
+  const f = radar.frames[i];
+  if(!radar.layers[f.path]){
+    // 512 px tiles at zoom-1 => 4x fewer requests; native zoom capped at 7 by the API
+    radar.layers[f.path] = L.tileLayer(radar.host + f.path + '/512/{z}/{x}/{y}/2/1_1.png', {
+      tileSize:512, zoomOffset:-1, maxNativeZoom:8, maxZoom:10, opacity:0, zIndex:10,
+      attribution:'<a href="https://www.rainviewer.com" target="_blank" rel="noopener">RainViewer</a>'
+    });
+  }
+  return radar.layers[f.path];
+}
+function radarShow(i){
+  const n = radar.frames.length;
+  if(!n || !radar.map) return;
+  i = ((i % n) + n) % n;
+  const cur = frameLayer(i), nxt = frameLayer((i + 1) % n);
+  // Only the visible frame and the next one stay on the map: limits requests to the API's rate limit
+  Object.values(radar.layers).forEach(l => { if(l !== cur && l !== nxt && radar.map.hasLayer(l)) radar.map.removeLayer(l); });
+  [cur, nxt].forEach(l => { if(!radar.map.hasLayer(l)) l.addTo(radar.map); });
+  if(nxt !== cur) nxt.setOpacity(0);
+  cur.setOpacity(0.8);
+  radar.idx = i;
+  $('#radarSlider').value = i;
+  const f = radar.frames[i];
+  const tz = state.wx && state.wx.timezone;
+  let hm;
+  try{ hm = new Date(f.time * 1000).toLocaleTimeString(t('locale'), Object.assign({timeZone:tz || undefined}, TIME_OPTS)); }
+  catch(e){ hm = new Date(f.time * 1000).toLocaleTimeString(t('locale'), TIME_OPTS); }
+  const ago = Math.max(0, Math.round((radar.frames[n - 1].time - f.time) / 60));
+  $('#radarTime').innerHTML = esc(hm) + '<small>' + esc(i === n - 1 ? t('radarLatest') : t('radarAgo', {m:ago})) + '</small>';
+}
+function radarPlay(on){
+  clearInterval(radar.timer); radar.timer = null;
+  $('#radarPlay').innerHTML = '<i class="fa-solid fa-' + (on ? 'pause' : 'play') + '"></i>';
+  if(!on || radar.frames.length < 2) return;
+  let hold = 0;
+  radar.timer = setInterval(() => {
+    if(radar.idx === radar.frames.length - 1 && hold < 2){ hold++; return; }   // pause briefly on the latest frame
+    hold = 0;
+    radarShow(radar.idx + 1);
+  }, 650);
+}
+function radarMsg(m){ $('#radarMsg').textContent = m; }
+
+/* =====================================================================
+   Live effects (canvas)
+   ===================================================================== */
+const fx = {
+  enabled: store.get('wx_fx', true),
+  reduce: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  canvas:null, ctx:null, w:0, h:0, dpr:1, parts:[], kind:null, intensity:0, raf:0, last:0,
+  lightning:false, nextBolt:0, cloudSprite:null, light:false
+};
+function fxResize(){
+  const c = fx.canvas; if(!c) return;
+  fx.dpr = Math.min(window.devicePixelRatio || 1, 2);
+  fx.w = window.innerWidth; fx.h = window.innerHeight;
+  c.width = Math.round(fx.w * fx.dpr); c.height = Math.round(fx.h * fx.dpr);
+  fx.ctx.setTransform(fx.dpr, 0, 0, fx.dpr, 0, 0);
+  fxSeed();
+}
+function cloudSprite(){
+  if(fx.cloudSprite) return fx.cloudSprite;
+  const s = document.createElement('canvas'); s.width = 360; s.height = 180;
+  const x = s.getContext('2d');
+  [[90,110,70],[170,85,85],[255,110,70],[175,120,75]].forEach(([cx, cy, r]) => {
+    const g = x.createRadialGradient(cx, cy, 0, cx, cy, r);
+    g.addColorStop(0, 'rgba(255,255,255,.55)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(cx, cy, r, 0, Math.PI * 2); x.fill();
+  });
+  return (fx.cloudSprite = s);
+}
+// kind: rain | snow | stars | clouds | fog | motes | null ; intensity 0..1
+function fxSet(code, isDay){
+  const g = wmo(code)[4];
+  let kind = null, intensity = 0.5, lightning = false;
+  if(g === 'rain' || g === 'storm'){
+    kind = 'rain';
+    intensity = [51,56].includes(code) ? 0.25 : [53,57,61,80].includes(code) ? 0.45 : [63,66,81].includes(code) ? 0.7 : 1;
+    lightning = [95,96,99].includes(code);
+  }else if(g === 'snow'){
+    kind = 'snow'; intensity = [71,77,85].includes(code) ? 0.4 : code === 73 ? 0.7 : 1;
+  }else if(g === 'fog'){ kind = 'fog'; intensity = 0.7; }
+  else if(g === 'cloudy'){ kind = isDay ? 'clouds' : 'starsClouds'; intensity = code === 3 ? 1 : 0.55; }
+  else if(g === 'clear'){ kind = isDay ? 'motes' : 'stars'; intensity = code === 0 ? 1 : 0.7; }
+  fx.light = document.body.classList.contains('light');
+  const changed = kind !== fx.kind || intensity !== fx.intensity;
+  fx.kind = kind; fx.intensity = intensity; fx.lightning = lightning;
+  if(changed) fxSeed();
+  fxStart();
+}
+function rnd(a, b){ return a + Math.random() * (b - a); }
+function fxSeed(){
+  const W = fx.w, H = fx.h, k = fx.kind, I = fx.intensity;
+  const area = (W * H) / (390 * 844);    // scale counts to the screen size
+  const P = [];
+  if(k === 'rain'){
+    const n = Math.round((60 + 220 * I) * area);
+    for(let i = 0; i < n; i++) P.push({x:rnd(0, W), y:rnd(-H, H), l:rnd(10, 22), v:rnd(650, 1000), a:rnd(.25, .6)});
+  }else if(k === 'snow'){
+    const n = Math.round((40 + 130 * I) * area);
+    for(let i = 0; i < n; i++) P.push({x:rnd(0, W), y:rnd(-H, H), r:rnd(1.2, 3.6), v:rnd(30, 80), ph:rnd(0, 6.28), sw:rnd(15, 40), a:rnd(.55, .95)});
+  }else if(k === 'stars' || k === 'starsClouds'){
+    const n = Math.round((k === 'stars' ? 110 : 45) * area * (0.6 + 0.4 * I));
+    for(let i = 0; i < n; i++) P.push({x:rnd(0, W), y:rnd(0, H * 0.75), r:rnd(.4, 1.6), ph:rnd(0, 6.28), sp:rnd(.6, 2.2), a:rnd(.35, .95)});
+    if(k === 'starsClouds') for(let i = 0; i < 4; i++) P.push({cloud:true, x:rnd(-200, W), y:rnd(0, H * 0.55), s:rnd(.7, 1.5), v:rnd(4, 10), a:rnd(.10, .2)});
+  }else if(k === 'clouds'){
+    const n = Math.round(4 + 4 * I);
+    for(let i = 0; i < n; i++) P.push({cloud:true, x:rnd(-300, W), y:rnd(-20, H * 0.6), s:rnd(.8, 1.8), v:rnd(5, 14), a:rnd(.18, .4)});
+  }else if(k === 'fog'){
+    for(let i = 0; i < 6; i++) P.push({y:rnd(H * 0.15, H), x:rnd(-W, 0), w:rnd(W * 1.2, W * 2), h:rnd(70, 160), v:rnd(6, 16), a:rnd(.12, .25)});
+  }else if(k === 'motes'){
+    const n = Math.round(26 * area);
+    for(let i = 0; i < n; i++) P.push({x:rnd(0, W), y:rnd(0, H), r:rnd(1, 2.6), vx:rnd(-6, 6), vy:rnd(-10, -3), ph:rnd(0, 6.28), a:rnd(.2, .5)});
+  }
+  fx.parts = P;
+  fx.nextBolt = performance.now() + rnd(2500, 6000);
+}
+function fxStart(){
+  const active = fx.enabled && !fx.reduce && fx.kind && !document.hidden;
+  if(!active){ fxStop(true); return; }
+  if(!fx.raf){ fx.last = performance.now(); fx.raf = requestAnimationFrame(fxFrame); }
+}
+function fxStop(clear){
+  if(fx.raf){ cancelAnimationFrame(fx.raf); fx.raf = 0; }
+  if(clear && fx.ctx) fx.ctx.clearRect(0, 0, fx.w, fx.h);
+}
+function fxFrame(now){
+  fx.raf = requestAnimationFrame(fxFrame);
+  const dt = Math.min(0.05, (now - fx.last) / 1000); fx.last = now;
+  const c = fx.ctx, W = fx.w, H = fx.h, k = fx.kind;
+  c.clearRect(0, 0, W, H);
+  if(k === 'rain'){
+    c.lineCap = 'round'; c.lineWidth = 1.2;
+    const col = fx.light ? '60,90,130' : '200,220,255', slant = 0.18;
+    for(const p of fx.parts){
+      p.y += p.v * dt; p.x += p.v * slant * dt;
+      if(p.y > H){ p.y = rnd(-40, -10); p.x = rnd(-60, W); }
+      c.strokeStyle = 'rgba(' + col + ',' + p.a + ')';
+      c.beginPath(); c.moveTo(p.x, p.y); c.lineTo(p.x - p.l * slant, p.y - p.l); c.stroke();
+    }
+    if(fx.lightning && now > fx.nextBolt){
+      fx.nextBolt = now + rnd(3500, 9000);
+      const fl = $('#flash');
+      fl.animate([{opacity:0},{opacity:.85},{opacity:.1},{opacity:.6},{opacity:0}], {duration:700, easing:'ease-out'});
+    }
+  }else if(k === 'snow'){
+    for(const p of fx.parts){
+      p.y += p.v * dt; p.ph += dt;
+      const x = p.x + Math.sin(p.ph) * p.sw * 0.4;
+      if(p.y > H + 5){ p.y = -5; p.x = rnd(0, W); }
+      c.fillStyle = 'rgba(255,255,255,' + p.a + ')';
+      if(fx.light){ c.strokeStyle = 'rgba(90,110,140,.35)'; c.lineWidth = .8; }
+      c.beginPath(); c.arc(x, p.y, p.r, 0, Math.PI * 2); c.fill();
+      if(fx.light) c.stroke();
+    }
+  }else if(k === 'stars' || k === 'starsClouds'){
+    const sprite = cloudSprite();
+    for(const p of fx.parts){
+      if(p.cloud){
+        p.x += p.v * dt; if(p.x > W + 50) p.x = -360 * p.s;
+        c.globalAlpha = p.a; c.drawImage(sprite, p.x, p.y, 360 * p.s, 180 * p.s); c.globalAlpha = 1;
+        continue;
+      }
+      p.ph += p.sp * dt;
+      c.fillStyle = 'rgba(255,255,255,' + (p.a * (0.55 + 0.45 * Math.sin(p.ph))).toFixed(3) + ')';
+      c.beginPath(); c.arc(p.x, p.y, p.r, 0, Math.PI * 2); c.fill();
+    }
+  }else if(k === 'clouds'){
+    const sprite = cloudSprite();
+    for(const p of fx.parts){
+      p.x += p.v * dt; if(p.x > W + 50) p.x = -360 * p.s;
+      c.globalAlpha = p.a; c.drawImage(sprite, p.x, p.y, 360 * p.s, 180 * p.s);
+    }
+    c.globalAlpha = 1;
+  }else if(k === 'fog'){
+    for(const p of fx.parts){
+      p.x += p.v * dt; if(p.x > W) p.x = -p.w;
+      const g = c.createLinearGradient(0, p.y - p.h / 2, 0, p.y + p.h / 2);
+      g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, 'rgba(255,255,255,' + p.a + ')'); g.addColorStop(1, 'rgba(255,255,255,0)');
+      c.fillStyle = g; c.fillRect(p.x, p.y - p.h / 2, p.w, p.h);
+    }
+  }else if(k === 'motes'){
+    for(const p of fx.parts){
+      p.x += p.vx * dt; p.y += p.vy * dt; p.ph += dt;
+      if(p.y < -5){ p.y = H + 5; p.x = rnd(0, W); }
+      if(p.x < -5) p.x = W + 5; else if(p.x > W + 5) p.x = -5;
+      c.fillStyle = 'rgba(255,240,200,' + (p.a * (0.6 + 0.4 * Math.sin(p.ph * 1.5))).toFixed(3) + ')';
+      c.beginPath(); c.arc(p.x, p.y, p.r, 0, Math.PI * 2); c.fill();
+    }
+  }
+}
+function setFx(on){
+  fx.enabled = on; store.set('wx_fx', on);
+  $$('#fxSeg button').forEach(b => b.classList.toggle('on', (b.dataset.fx === '1') === on));
+  fxStart();
+}
+
+/* =====================================================================
+   Search (Open-Meteo Geocoding)
+   ===================================================================== */
+let qTimer, qSeq = 0, lastResults = [];
 function renderRecent(){
   const rec = store.get('wx_recent', []);
-  $('#resLabel').textContent = 'Πρόσφατες αναζητήσεις';
+  $('#resLabel').textContent = t('recent');
   if(!rec.length){
-    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-earth-europe"></i>Αναζητήστε οποιαδήποτε πόλη στον κόσμο,<br>στα ελληνικά ή στα αγγλικά.</div>';
+    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-earth-europe"></i>' + esc(t('searchEmpty')) + '</div>';
     return;
   }
   $('#results').innerHTML = rec.map((r, i) => resRow(r, 'rec', i)).join('');
@@ -740,48 +1420,72 @@ function resRow(r, kind, i){
     '<div><div class="rn">' + esc(r.name) + '</div><div class="rs">' + esc(r.sub || '') + '</div></div>' +
     '<i class="fa-solid fa-chevron-right chev"></i></div>';
 }
-let lastResults = [];
 async function doSearch(q){
   const seq = ++qSeq;
   if(q.length < 2){ renderRecent(); return; }
-  $('#resLabel').textContent = 'Αποτελέσματα';
-  $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i>Αναζήτηση…</div>';
+  $('#resLabel').textContent = t('results');
+  $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-circle-notch fa-spin"></i>' + esc(t('searching')) + '</div>';
   try{
-    const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=el&format=json';
+    const url = 'https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(q) + '&count=10&language=' + lang + '&format=json';
     const data = await getJSON(url);
     if(seq !== qSeq) return;
-    lastResults = (data.results || []).map(r => ({
+    lastResults = (data.results || []).filter(r => num(r.latitude) && num(r.longitude)).map(r => ({
       lat:r.latitude, lon:r.longitude, name:r.name, cc:r.country_code,
-      sub:[r.admin1, r.country].filter(Boolean).join(', ') + (r.elevation != null ? ' · ' + Math.round(r.elevation) + ' μ' : '')
+      sub:[r.admin1, r.country].filter(Boolean).join(', ') + (num(r.elevation) ? ' · ' + Math.round(r.elevation) + ' ' + t('meters') : '')
     }));
     $('#results').innerHTML = lastResults.length
       ? lastResults.map((r, i) => resRow(r, 'res', i)).join('')
-      : '<div class="empty"><i class="fa-regular fa-face-frown"></i>Δεν βρέθηκαν αποτελέσματα για «' + esc(q) + '»</div>';
+      : '<div class="empty"><i class="fa-regular fa-face-frown"></i>' + esc(t('noResults', {q})) + '</div>';
   }catch(e){
     if(seq !== qSeq) return;
-    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-wifi"></i>Σφάλμα σύνδεσης. Δοκιμάστε ξανά.</div>';
+    $('#results').innerHTML = '<div class="empty"><i class="fa-solid fa-wifi"></i>' + esc(t('netErr')) + '</div>';
   }
 }
 function pickLocation(r){
   const rec = store.get('wx_recent', []).filter(x => !(Math.abs(x.lat - r.lat) < 1e-3 && Math.abs(x.lon - r.lon) < 1e-3));
   rec.unshift(r); store.set('wx_recent', rec.slice(0, 6));
-  $('#q').value = ''; $('#qClear').style.display = 'none';
-  $('#q').blur();
+  $('#q').value = ''; $('#qClear').style.display = 'none'; $('#q').blur();
   renderRecent();
   switchView('now');
-  loadWeather(r);
+  loadWeather(Object.assign({}, r));
 }
 
-/* ================= Navigation ================= */
+/* =====================================================================
+   Navigation, language, misc UI
+   ===================================================================== */
 function switchView(v){
+  const prev = state.view;
+  state.view = v;
   $$('.view').forEach(el => el.classList.toggle('active', el.id === 'view-' + v));
   $$('nav.bottom button').forEach(b => b.classList.toggle('active', b.dataset.view === v));
   $('#main').scrollTop = 0;
+  if(prev === 'radar' && v !== 'radar') radarPlay(false);
   if(v === 'forecast') setTimeout(renderChart, 30);
-  if(v === 'search') setTimeout(() => $('#q').focus(), 250);
+  if(v === 'radar') radarOpen();
+}
+function setLang(l){
+  if(!I18N[l] || l === lang) return;
+  lang = l; store.set('wx_lang', l);
+  applyStatic();
+  renderRecent();
+  if($('#q').value.trim().length >= 2) doSearch($('#q').value.trim());
+  if(state.wx) renderAll(); else renderHeader();
+  if(state.view === 'forecast') renderChart();
+  if(radar.frames.length) radarShow(radar.idx);
+}
+let toastTimer;
+function toast(msg){
+  const el = $('#toast'); el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('on'), 3200);
+}
+function loading(on){
+  $('#loader').classList.toggle('on', on);
+  $('#btnRefresh').classList.toggle('spin', on);
 }
 
-/* ================= PWA: generated icons & manifest ================= */
+/* =====================================================================
+   PWA: generated icons & manifest
+   ===================================================================== */
 function makeIcon(size){
   const c = document.createElement('canvas'); c.width = c.height = size;
   const x = c.getContext('2d');
@@ -805,68 +1509,95 @@ function setupPWA(){
     const i180 = makeIcon(180), i192 = makeIcon(192), i512 = makeIcon(512);
     $('#touchIcon').href = i180;
     $('#favIcon').href = i192;
-    const base = location.href.split('#')[0];
+    const base = location.href.split('#')[0].split('?')[0];
     const manifest = {
-      name:'Καιρός', short_name:'Καιρός', description:'Premium εφαρμογή καιρού',
-      start_url:base, scope:base.substring(0, base.lastIndexOf('/') + 1),
-      display:'standalone', orientation:'portrait',
-      background_color:'#1f7fe0', theme_color:'#1f7fe0', lang:'el',
+      name:'Καιρός', short_name:'Καιρός', start_url:base, scope:base.substring(0, base.lastIndexOf('/') + 1),
+      display:'standalone', orientation:'portrait', background_color:'#1f7fe0', theme_color:'#1f7fe0',
       icons:[{src:i192, sizes:'192x192', type:'image/png'}, {src:i512, sizes:'512x512', type:'image/png', purpose:'any maskable'}]
     };
     $('#manifestLink').href = URL.createObjectURL(new Blob([JSON.stringify(manifest)], {type:'application/manifest+json'}));
   }catch(e){}
 }
 
-/* ================= Events ================= */
+/* =====================================================================
+   Events
+   ===================================================================== */
 $$('nav.bottom button').forEach(b => b.addEventListener('click', () => switchView(b.dataset.view)));
 $('#btnLocate').addEventListener('click', locate);
 $('#btnLocate2').addEventListener('click', locate);
-$('#btnRefresh').addEventListener('click', () => state.loc && loadWeather(state.loc));
+$('#btnRefresh').addEventListener('click', () => {
+  if(state.loc) loadWeather(state.loc);
+  if(state.view === 'radar'){ radar.loadedAt = 0; radarOpen(); }
+});
 $('#aqiTile').addEventListener('click', () => switchView('air'));
-$$('.seg button').forEach(b => b.addEventListener('click', () => {
-  $$('.seg button').forEach(x => x.classList.toggle('on', x === b));
+$$('#modeSeg button').forEach(b => b.addEventListener('click', () => {
+  $$('#modeSeg button').forEach(x => x.classList.toggle('on', x === b));
   state.mode = b.dataset.mode;
   $('#chartScroll').scrollLeft = 0;
   renderChart();
 }));
+$$('#langSeg button').forEach(b => b.addEventListener('click', () => setLang(b.dataset.lang)));
+$$('#fxSeg button').forEach(b => b.addEventListener('click', () => setFx(b.dataset.fx === '1')));
+$('#radarPlay').addEventListener('click', () => radarPlay(!radar.timer));
+$('#radarSlider').addEventListener('input', e => { radarPlay(false); radarShow(+e.target.value); });
 $('#q').addEventListener('input', e => {
   const v = e.target.value.trim();
   $('#qClear').style.display = v ? 'block' : 'none';
   clearTimeout(qTimer); qTimer = setTimeout(() => doSearch(v), 350);
 });
-$('#q').addEventListener('keydown', e => {
-  if(e.key === 'Enter'){ clearTimeout(qTimer); doSearch(e.target.value.trim()); }
-});
+$('#q').addEventListener('keydown', e => { if(e.key === 'Enter'){ clearTimeout(qTimer); doSearch(e.target.value.trim()); } });
 $('#qClear').addEventListener('click', () => { $('#q').value = ''; $('#qClear').style.display = 'none'; renderRecent(); $('#q').focus(); });
 $('#results').addEventListener('click', e => {
   const row = e.target.closest('.res'); if(!row) return;
   const list = row.dataset.kind === 'rec' ? store.get('wx_recent', []) : lastResults;
   const r = list[+row.dataset.i]; if(r) pickLocation(r);
 });
-// Refresh when returning to the app after a while
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
-  if(document.hidden) hiddenAt = Date.now();
-  else if(state.loc && Date.now() - hiddenAt > 10 * 60 * 1000) loadWeather(state.loc);
+  if(document.hidden){ hiddenAt = Date.now(); fxStop(false); radarPlay(false); return; }
+  fxStart();
+  if(state.loc && Date.now() - hiddenAt > 10 * 60 * 1000){
+    loadWeather(state.loc);
+    if(state.view === 'radar'){ radar.loadedAt = 0; radarOpen(); }
+  }
 });
 let resizeT;
-window.addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => state.wx && renderChart(), 200); });
+window.addEventListener('resize', () => {
+  clearTimeout(resizeT);
+  resizeT = setTimeout(() => {
+    fxResize();
+    if(state.wx && state.view === 'forecast') renderChart();
+    if(radar.map) radar.map.invalidateSize();
+  }, 200);
+});
 
-/* ================= Init ================= */
+/* =====================================================================
+   Init
+   ===================================================================== */
+fx.canvas = $('#fx'); fx.ctx = fx.canvas.getContext('2d');
+fxResize();
 setupPWA();
+applyStatic();
 applyTheme('clear-day');
 renderRecent();
 const saved = store.get('wx_loc', null);
-if(saved && saved.lat != null){
+if(saved && num(saved.lat) && num(saved.lon)){
+  if(saved.gps){ delete saved.name; delete saved.sub; }   // names from v1 were fixed labels, not place names
   loadWeather(saved);
-} else {
-  loadWeather(DEFAULT_LOC);
-  if('geolocation' in navigator){
+  // a GPS location is refreshed with the live position (also fetches the area name)
+  if(saved.gps && 'geolocation' in navigator){
     navigator.geolocation.getCurrentPosition(pos => {
-      loadWeather({lat:pos.coords.latitude, lon:pos.coords.longitude, name:'Η τοποθεσία μου', sub:'Τρέχουσα θέση', cc:null, gps:true});
+      if(state.loc && state.loc.gps) useGPS(pos.coords.latitude, pos.coords.longitude, state.loc);
     }, () => {}, {timeout:10000, maximumAge:600000});
   }
+}else{
+  loadWeather(Object.assign({}, DEFAULT_LOC));
+  if('geolocation' in navigator){
+    navigator.geolocation.getCurrentPosition(pos => useGPS(pos.coords.latitude, pos.coords.longitude), () => {}, {timeout:10000, maximumAge:600000});
+  }
 }
+// Test hook (harmless in production)
+window.__wx = {state, radar, fx, setLang, switchView, renderAll, t};
 })();
 </script>
 </body>
