@@ -221,6 +221,12 @@ body.light .range .track{background:rgba(22,32,44,.1)}
 .alert .ai{width:38px;height:38px;flex:none;border-radius:12px;display:grid;place-items:center;background:var(--lvl);color:#111;font-size:1.05rem}
 .alert b{display:block;font-size:.95rem}
 .alert span{display:block;font-size:.8rem;color:var(--ink-soft);margin-top:3px}
+#alerts{text-align:left;margin-top:16px}
+#alerts:empty{display:none}
+.alert.official{border-left-width:7px}
+.alert em{display:inline-block;font-style:normal;font-size:.66rem;font-weight:800;letter-spacing:.04em;text-transform:uppercase;background:var(--lvl);color:#111;border-radius:8px;padding:2px 7px;margin-bottom:4px}
+.off-ok{display:flex;align-items:center;justify-content:center;gap:8px;font-size:.78rem;font-weight:600;color:var(--ink-soft);margin:0 4px 12px}
+.off-ok i{color:#3ddc84}
 .alert-note{font-size:.7rem;color:var(--ink-soft);margin:-2px 4px 14px}
 .alert-note a{color:inherit;font-weight:700}
 
@@ -353,6 +359,7 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         <div class="temp"><span id="temp">--</span><sup>°C</sup></div>
         <div class="desc" id="desc">—</div>
         <div class="hl"><span data-i18n="feels"></span> <b id="feels">--°</b> &nbsp;·&nbsp; <i class="fa-solid fa-arrow-up"></i> <b id="tmax">--°</b> &nbsp; <i class="fa-solid fa-arrow-down"></i> <b id="tmin">--°</b></div>
+        <div id="alerts"></div>
         <div class="trip hidden" id="tripChip"></div>
         <div class="chip hidden" id="normChip"></div>
         <div class="tm glass">
@@ -362,8 +369,6 @@ nav.bottom button.active::after{content:'';position:absolute;bottom:6px;width:5p
         </div>
         <button class="share-btn glass" id="shareBtn"><i class="fa-solid fa-arrow-up-from-bracket"></i><span data-i18n="share"></span></button>
       </div>
-
-      <div id="alerts"></div>
 
       <div class="card glass hidden" id="sumCard">
         <div class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="summaryTitle"></span></div>
@@ -716,7 +721,8 @@ const I18N = {
     alSnow:'Χιονόπτωση', alUV:'Πολύ υψηλή υπεριώδης ακτινοβολία', alFog:'Ομίχλη', alQuake:'Σεισμός {m} Ρίχτερ κοντά σας',
     alUpTo:'Έως {v}°', alWindD:'Ριπές έως {v} km/h', alRainD:'Έως {v} mm σε μία ώρα', alSnowD:'Έως {v} cm', alUVD:'Δείκτης UV έως {v}',
     alQuakeD:'{km} km μακριά · {ago}', alWhen:'{day} {from}–{to}',
-    alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alLink:'ΕΜΥ', tomorrow:'Αύριο',
+    alNote:'Αυτόματη εκτίμηση από την πρόγνωση. Επίσημες προειδοποιήσεις:', alNote2:'Οι κάρτες χωρίς σήμανση ΕΜΥ είναι αυτόματη εκτίμηση από την πρόγνωση. Περισσότερα:', alLink:'ΕΜΥ',
+    offBadge:'ΕΜΥ · {c} προειδοποίηση', offLvl:['','Κίτρινη','Πορτοκαλί','Κόκκινη'], offNone:'ΕΜΥ: καμία ενεργή προειδοποίηση για την περιοχή σας', offUntil:'ισχύει έως {t}', offFrom:'{a} – {b}', tomorrow:'Αύριο',
     tmNow:'Τώρα', tmBack:'Τώρα', tmHint:'Σύρετε για να δείτε τις επόμενες 24 ώρες', tmPlus12:'+12 ώρες', tmPlus24:'+24 ώρες',
     tripDrive:'~{t} με αυτοκίνητο · {km} km', tripAir:'{km} km σε ευθεία γραμμή από εσάς', tripCalc:'Πόσο απέχει από εμένα;', tripDirections:'Οδηγίες', tripAttr:'Διαδρομή: OSRM', tripFix:'διόρθωση χάρτη',
     durM:'{m} λεπτά', durH:'{h} ώ {m} λ', durHOnly:'{h} ώρες',
@@ -790,7 +796,8 @@ const I18N = {
     alSnow:'Snowfall', alUV:'Very high UV radiation', alFog:'Fog', alQuake:'M{m} earthquake near you',
     alUpTo:'Up to {v}°', alWindD:'Gusts up to {v} km/h', alRainD:'Up to {v} mm in an hour', alSnowD:'Up to {v} cm', alUVD:'UV index up to {v}',
     alQuakeD:'{km} km away · {ago}', alWhen:'{day} {from}–{to}',
-    alNote:'Automatic estimate from the forecast. Official warnings:', alLink:'HNMS (EMY)', tomorrow:'Tomorrow',
+    alNote:'Automatic estimate from the forecast. Official warnings:', alNote2:'Cards without the HNMS label are automatic estimates from the forecast. More:', alLink:'HNMS (EMY)',
+    offBadge:'HNMS · {c} warning', offLvl:['','Yellow','Orange','Red'], offNone:'HNMS: no active warnings for your area', offUntil:'valid until {t}', offFrom:'{a} – {b}', tomorrow:'Tomorrow',
     tmNow:'Now', tmBack:'Now', tmHint:'Slide to see the next 24 hours', tmPlus12:'+12 h', tmPlus24:'+24 h',
     tripDrive:'~{t} by car · {km} km', tripAir:'{km} km from you (straight line)', tripCalc:'How far is it from me?', tripDirections:'Directions', tripAttr:'Route: OSRM', tripFix:'fix the map',
     durM:'{m} min', durH:'{h} h {m} min', durHOnly:'{h} h',
@@ -974,7 +981,7 @@ async function loadWeather(loc){
     if(myReq !== state.reqId) return;          // a newer request superseded this one
     if(!wx || !wx.current || !wx.daily) throw new Error('bad payload');
     const sameLoc = state.wx && state.wxLoc && Math.abs(state.wxLoc.lat - loc.lat) < 1e-3 && Math.abs(state.wxLoc.lon - loc.lon) < 1e-3;
-    if(!sameLoc){ state.tm = 0; state.conf = null; state.normals = null; state.quakes = null; state.quakesFailed = false; }
+    if(!sameLoc){ state.tm = 0; state.conf = null; state.normals = null; state.quakes = null; state.quakesFailed = false; state.official = null; }
     state.wx = wx; state.aq = aq; state.sea = sea; state.wxLoc = {lat:loc.lat, lon:loc.lon};
     renderAll();
     loadExtras(loc, myReq);
@@ -1658,13 +1665,108 @@ function computeAlerts(){
   return out.sort((a, b) => b.lvl - a.lvl);
 }
 function renderAlerts(){
-  const list = computeAlerts(), box = $('#alerts');
-  if(!list.length){ box.innerHTML = ''; return; }
+  const list = computeAlerts(), box = $('#alerts'), off = officialHTML();
+  if(!list.length){ box.innerHTML = off; return; }
   const weatherOnly = list.some(a => a.icon !== 'fa-house-crack');
-  box.innerHTML = list.map(a =>
+  box.innerHTML = off + list.map(a =>
     '<div class="alert glass" style="--lvl:' + LVL[a.lvl] + '"><div class="ai"><i class="fa-solid ' + a.icon + '"></i></div>' +
     '<div><b>' + esc(a.title) + '</b><span>' + esc([a.det, a.when].filter(Boolean).join(' · ')) + '</span></div></div>').join('') +
-    (weatherOnly ? '<div class="alert-note">' + esc(t('alNote')) + ' <a href="https://www.emy.gr" target="_blank" rel="noopener">' + esc(t('alLink')) + '</a></div>' : '');
+    (weatherOnly ? '<div class="alert-note">' + esc(t(state.official ? 'alNote2' : 'alNote')) + ' <a href="https://www.emy.gr" target="_blank" rel="noopener">' + esc(t('alLink')) + '</a></div>' : '');
+}
+
+/* =====================================================================
+   Official warnings (HNMS / EMY via EUMETNET Meteoalarm)
+   ===================================================================== */
+// Reference towns -> Meteoalarm region (EMMA_ID); a place takes the region of its nearest town
+const GR_TOWNS = [
+  ['GR011',37.98,23.73],['GR011',37.94,23.65],['GR011',38.15,23.96],['GR011',37.71,24.05],['GR011',38.04,23.54],['GR011',38.00,23.34],['GR011',37.75,23.43],['GR011',37.96,23.49],['GR011',37.87,23.75],['GR011',38.07,23.81],['GR011',38.02,24.00],
+  ['GR003',38.46,23.60],['GR003',38.32,23.32],['GR003',38.44,22.88],['GR003',38.90,22.43],['GR003',38.65,22.99],['GR003',38.02,24.42],['GR003',38.95,23.15],['GR003',38.63,24.10],['GR003',38.90,24.56],
+  ['GR002',38.53,22.38],['GR002',38.92,21.79],['GR002',38.62,21.41],['GR002',38.37,21.43],['GR002',38.39,21.83],['GR002',38.53,21.08],['GR002',38.92,20.89],
+  ['GR009',38.25,21.73],['GR009',38.25,22.08],['GR009',37.67,21.44],['GR009',37.04,22.11],['GR009',36.91,21.70],['GR009',37.25,21.67],['GR009',38.03,22.11],
+  ['GR015',37.94,22.93],['GR015',37.63,22.73],['GR015',37.57,22.80],['GR015',37.51,22.37],['GR015',37.07,22.43],['GR015',36.76,22.57],['GR015',36.69,23.05],['GR015',36.15,22.99],['GR015',37.40,22.14],
+  ['GR010',39.62,19.92],['GR010',38.83,20.71],['GR010',38.18,20.49],['GR010',37.78,20.90],['GR010',38.37,20.72],['GR010',39.20,20.18],
+  ['GR008',39.66,20.85],['GR008',39.16,20.99],['GR008',38.96,20.75],['GR008',39.50,20.27],['GR008',40.04,20.75],['GR008',39.77,21.18],['GR008',39.29,20.40],
+  ['GR001',39.64,22.42],['GR001',39.36,22.94],['GR001',39.56,21.77],['GR001',39.36,21.92],['GR001',39.89,22.19],['GR001',39.16,23.49],['GR001',39.12,23.73],['GR001',39.18,22.76],['GR001',39.70,21.63],
+  ['GR006',40.30,21.79],['GR006',40.52,21.27],['GR006',40.78,21.41],['GR006',40.08,21.43],['GR006',40.51,21.68],['GR006',40.26,21.55],
+  ['GR007',40.64,22.94],['GR007',40.27,22.50],['GR007',40.52,22.20],['GR007',40.80,22.05],['GR007',40.79,22.41],['GR007',40.99,22.87],['GR007',41.09,23.55],['GR007',40.38,23.44],['GR007',40.24,23.28],['GR007',40.40,23.88],['GR007',41.24,23.39],['GR007',40.10,22.50],
+  ['GR005',40.94,24.41],['GR005',41.15,24.15],['GR005',40.78,24.71],['GR005',40.92,24.25],
+  ['GR004',41.14,24.89],['GR004',41.12,25.40],['GR004',40.85,25.87],['GR004',41.50,26.53],['GR004',40.47,25.53],['GR004',41.20,26.30],
+  ['GR014',39.10,26.55],['GR014',38.37,26.14],['GR014',37.76,26.98],['GR014',39.88,25.06],['GR014',37.60,26.17],['GR014',39.53,24.99],['GR014',38.54,25.56],['GR014',37.58,26.48],
+  ['GR012',37.44,24.94],['GR012',37.10,25.38],['GR012',37.08,25.15],['GR012',37.45,25.33],['GR012',36.42,25.43],['GR012',36.73,24.43],['GR012',37.84,24.94],['GR012',37.54,25.16],['GR012',37.65,24.33],['GR012',36.83,25.90],['GR012',36.73,25.28],['GR012',37.15,24.50],['GR012',36.97,24.72],['GR012',36.62,24.92],['GR012',36.36,25.77],
+  ['GR013',36.43,28.22],['GR013',36.89,27.29],['GR013',36.95,26.98],['GR013',37.15,26.85],['GR013',37.32,26.55],['GR013',35.51,27.21],['GR013',36.62,27.84],['GR013',36.55,26.35],['GR013',36.43,27.37],['GR013',36.59,27.17],['GR013',36.15,29.59],['GR013',36.09,28.09],
+  ['GR016',35.34,25.13],['GR016',35.51,24.02],['GR016',35.37,24.47],['GR016',35.19,25.72],['GR016',35.21,26.10],['GR016',35.01,25.74],['GR016',35.05,24.87],['GR016',35.49,23.66],['GR016',35.20,24.14],['GR016',34.84,24.08]
+];
+function greekRegion(lat, lon){
+  let best = null, bd = Infinity;
+  GR_TOWNS.forEach(tw => { const d = haversineKm(lat, lon, tw[1], tw[2]); if(d < bd){ bd = d; best = tw[0]; } });
+  return bd <= 70 ? best : null;
+}
+const OFF_ICONS = {1:'fa-wind', 2:'fa-snowflake', 3:'fa-cloud-bolt', 4:'fa-smog', 5:'fa-temperature-arrow-up', 6:'fa-temperature-arrow-down',
+  7:'fa-water', 8:'fa-fire', 9:'fa-mountain', 10:'fa-cloud-showers-heavy', 12:'fa-house-flood-water', 13:'fa-house-flood-water'};
+async function fetchOfficial(){
+  const d = await getJSON('https://feeds.meteoalarm.org/api/v1/warnings/feeds-greece', 15000);
+  const list = [];
+  (d && d.warnings || []).forEach(w => {
+    const a = w && w.alert; if(!a || !Array.isArray(a.info)) return;
+    if(a.status && a.status !== 'Actual') return;
+    if(a.msgType === 'Cancel') return;
+    const pick = l => a.info.find(i => String(i.language || '').toLowerCase().startsWith(l));
+    const el = pick('el') || a.info[0], en = pick('en') || a.info[0];
+    const p = (el.parameter || []).concat(en.parameter || []);
+    const val = n => { const x = p.find(q => q && q.valueName === n); return x ? String(x.value) : ''; };
+    const lvl = parseInt(val('awareness_level'), 10), typ = parseInt(val('awareness_type'), 10);
+    if(!(lvl >= 2)) return;                     // 1 = green / no warning
+    const codes = [];
+    (el.area || []).concat(en.area || []).forEach(ar => (ar.geocode || []).forEach(g => { if(g && g.valueName === 'EMMA_ID' && g.value) codes.push(String(g.value)); }));
+    const onset = Date.parse(el.onset || el.effective || a.sent), expires = Date.parse(el.expires);
+    if(!num(expires)) return;
+    list.push({lvl, typ, codes:[...new Set(codes)], onset:num(onset) ? onset : Date.now(), expires,
+      el:{event:el.event, headline:el.headline, area:(el.area || []).map(x => x.areaDesc).join(', ')},
+      en:{event:en.event, headline:en.headline, area:(en.area || []).map(x => x.areaDesc).join(', ')}});
+  });
+  return list;
+}
+const OFF_LVL = {2:1, 3:2, 4:3};
+function officialFor(){
+  const o = state.official, L = state.loc;
+  if(!o || !L) return null;
+  const inGreece = !L.cc || String(L.cc).toUpperCase() === 'GR';
+  const region = inGreece ? greekRegion(L.lat, L.lon) : null;
+  if(!region) return null;
+  const now = Date.now();
+  const mine = o.filter(w => w.codes.includes(region) && w.expires > now && w.onset < now + 48 * 3600e3)
+    .sort((a, b) => b.lvl - a.lvl || a.onset - b.onset);
+  // one card per (type, level): merge consecutive periods
+  const seen = {}, out = [];
+  mine.forEach(w => {
+    const k = w.typ + ':' + w.lvl;
+    if(seen[k]){ seen[k].onset = Math.min(seen[k].onset, w.onset); seen[k].expires = Math.max(seen[k].expires, w.expires); return; }
+    seen[k] = Object.assign({}, w); out.push(seen[k]);
+  });
+  return {region, list:out};
+}
+function fmtWhen(ms){
+  const tz = state.wx && state.wx.timezone;
+  try{
+    const day = new Date(ms).toLocaleDateString('en-CA', {timeZone:tz});
+    const lbl = day === state.wx.daily.time[0] ? t('today') : day === state.wx.daily.time[1] ? t('tomorrow')
+      : new Date(ms).toLocaleDateString(t('locale'), {weekday:'short', timeZone:tz});
+    return lbl + ' ' + new Date(ms).toLocaleTimeString(t('locale'), Object.assign({timeZone:tz}, TIME_OPTS));
+  }catch(e){ return new Date(ms).toLocaleString(); }
+}
+function officialHTML(){
+  const r = officialFor();
+  if(!r) return '';
+  if(!r.list.length) return '<div class="off-ok"><i class="fa-solid fa-circle-check"></i>' + esc(t('offNone')) + '</div>';
+  const now = Date.now();
+  return r.list.map(w => {
+    const tx = w[lang] || w.el;
+    const active = w.onset <= now;
+    const when = active ? t('offUntil', {t:fmtWhen(w.expires)}) : t('offFrom', {a:fmtWhen(w.onset), b:fmtWhen(w.expires)});
+    return '<div class="alert glass official" style="--lvl:' + LVL[OFF_LVL[w.lvl] || 1] + '"><div class="ai"><i class="fa-solid ' + (OFF_ICONS[w.typ] || 'fa-triangle-exclamation') + '"></i></div>' +
+      '<div><em>' + esc(t('offBadge', {c:t('offLvl')[OFF_LVL[w.lvl] || 1]})) + '</em><b>' + esc(tx.event || tx.headline || '') + '</b>' +
+      '<span>' + esc([tx.area, when].filter(Boolean).join(' · ')) + '</span></div></div>';
+  }).join('');
 }
 
 /* =====================================================================
@@ -1777,6 +1879,7 @@ function loadExtras(loc, req){
   const done = () => { if(req === state.reqId) renderExtras(); };
   fetchModels(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.conf = v; done(); } }).catch(() => { if(req === state.reqId){ state.conf = null; done(); } });
   fetchNormals(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.normals = v; done(); } }).catch(() => { if(req === state.reqId){ state.normals = null; done(); } });
+  fetchOfficial().then(v => { if(req === state.reqId){ state.official = v; done(); } }).catch(() => { if(req === state.reqId){ state.official = null; done(); } });
   fetchQuakes(loc.lat, loc.lon).then(v => { if(req === state.reqId){ state.quakes = v; done(); } }).catch(() => { if(req === state.reqId){ state.quakes = null; state.quakesFailed = true; done(); } });
 }
 function renderExtras(){
