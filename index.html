@@ -1242,6 +1242,27 @@ function renderAir(){
 const dayShort = iso => new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString(t('locale'), {weekday:'short'}).replace('.', '');
 const dayDate = iso => new Date(iso.slice(0, 10) + 'T12:00:00').toLocaleDateString(t('locale'), {day:'numeric', month:'short'});
 
+// For today, rain chance and icon cover only the hours still ahead (not the whole day since midnight)
+function todayRest(){
+  const wx = state.wx, h = wx.hourly, d = wx.daily;
+  if(!h || !h.time) return null;
+  const s = nowIdx(), day = d.time[0];
+  let pop = null, code = null;
+  for(let i = s; i < h.time.length && h.time[i].slice(0, 10) === day; i++){
+    const p = H('precipitation_probability', i), c = H('weather_code', i);
+    if(p !== null) pop = pop === null ? p : Math.max(pop, p);
+    if(c !== null) code = code === null ? c : Math.max(code, c);   // higher WMO code = more significant weather
+  }
+  return {pop, code};
+}
+function dayPop(i){
+  if(i === 0){ const r = todayRest(); if(r && r.pop !== null) return r.pop; }
+  const a = state.wx.daily.precipitation_probability_max; return a ? a[i] : null;
+}
+function dayCode(i){
+  if(i === 0){ const r = todayRest(); if(r && r.code !== null) return r.code; }
+  return state.wx.daily.weather_code[i];
+}
 function renderDays(){
   const d = state.wx.daily;
   const mins = d.temperature_2m_min.filter(num), maxs = d.temperature_2m_max.filter(num);
@@ -1250,11 +1271,11 @@ function renderDays(){
   $('#dayList').innerHTML = d.time.map((day, i) => {
     const lo = d.temperature_2m_min[i], hi = d.temperature_2m_max[i];
     const left = (lo - gMin) / span * 100, width = (hi - lo) / span * 100;
-    const pp = d.precipitation_probability_max ? d.precipitation_probability_max[i] : null;
+    const pp = dayPop(i);
     return '<div class="day">' +
       '<div class="dn">' + (i === 0 ? esc(t('today')) : esc(dayShort(day))) + '<small>' + esc(dayDate(day)) + '</small>' +
         (state.conf && num(state.conf[i]) ? '<span class="conf" style="color:' + ['#ff8a8a', '#ffd23f', '#3ddc84'][state.conf[i]] + '">' + esc(t('confChip')[state.conf[i]]) + '</span>' : '') + '</div>' +
-      '<div class="di"><i class="fa-solid ' + wIcon(d.weather_code[i], true) + '" title="' + esc(wDesc(d.weather_code[i])) + '"></i></div>' +
+      '<div class="di"><i class="fa-solid ' + wIcon(dayCode(i), true) + '" title="' + esc(wDesc(dayCode(i))) + '"></i></div>' +
       '<div class="dp">' + (num(pp) ? '<i class="fa-solid fa-droplet"></i> ' + pp + '%' : '') + '</div>' +
       '<div class="range"><span class="lo">' + r0(lo) + '°</span><div class="track"><span style="left:' + left + '%;width:' + Math.max(width, 4) + '%"></span></div><span class="hi">' + r0(hi) + '°</span></div>' +
       '</div>';
@@ -1288,7 +1309,7 @@ function renderChart(){
     datasets = [
       {type:'line', label:t('tMax'), data:d.temperature_2m_max, borderColor:'#ffb547', backgroundColor:fill('#ffb547'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#ffb547', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:1},
       {type:'line', label:t('tMin'), data:d.temperature_2m_min, borderColor:'#5fb8ff', backgroundColor:fill('#5fb8ff'), fill:true, tension:.45, borderWidth:3, pointRadius:5, pointHoverRadius:7, pointBackgroundColor:'#5fb8ff', pointBorderColor:'#fff', pointBorderWidth:2, yAxisID:'y', order:2},
-      {type:'bar', label:t('rainProb'), data:d.precipitation_probability_max, backgroundColor:barCol, borderRadius:8, barPercentage:.45, yAxisID:'y1', order:3}
+      {type:'bar', label:t('rainProb'), data:d.time.map((x, i) => dayPop(i)), backgroundColor:barCol, borderRadius:8, barPercentage:.45, yAxisID:'y1', order:3}
     ];
   }else{
     const h = wx.hourly, n = h.time.length;
